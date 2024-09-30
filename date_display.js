@@ -21,6 +21,8 @@
         if (table) {
             // Create the table header element
             createTableHeader();
+            createTableBody();
+            editTableProperties();
         }
 
         function createTableHeader() {
@@ -68,6 +70,25 @@
 
             // Append tableHead to the table, e.g. to the first row of the thead
             document.querySelector('thead tr').appendChild(tableHead);
+        }
+
+        function createTableBody() {
+            // Create the table data element
+            const signupDate = document.createElement('td');
+            signupDate.textContent = 'Sample Date';
+
+            // Append the table data element to the table
+            document.querySelector("#membersTable > tbody > tr").appendChild(signupDate);
+        }
+
+        function editTableProperties() {
+            //<tr><th scope="col" width="10%"> ID <sc-collection-sort column="id"><div class="sort-options"><span class="sort-asc active"><i aria-hidden="true" class="fa fa-angle-up"></i></span><span class="sort-desc"><i aria-hidden="true" class="fa fa-angle-down"></i></span></div></sc-collection-sort></th><th scope="col" width="15%"> First Name <sc-collection-sort column="personalInfo.firstName"><div class="sort-options"><span class="sort-asc"><i aria-hidden="true" class="fa fa-angle-up"></i></span><span class="sort-desc"><i aria-hidden="true" class="fa fa-angle-down"></i></span></div></sc-collection-sort></th><th scope="col" width="15%"> Last Name <sc-collection-sort column="personalInfo.lastName"><div class="sort-options"><span class="sort-asc"><i aria-hidden="true" class="fa fa-angle-up"></i></span><span class="sort-desc"><i aria-hidden="true" class="fa fa-angle-down"></i></span></div></sc-collection-sort></th><th scope="col" width="35%"> Email <sc-collection-sort column="email"><div class="sort-options"><span class="sort-asc"><i aria-hidden="true" class="fa fa-angle-up"></i></span><span class="sort-desc"><i aria-hidden="true" class="fa fa-angle-down"></i></span></div></sc-collection-sort></th><th scope="col" width="15%"> Phone <sc-collection-sort column="personalInfo.mobilePhoneNumber"><div class="sort-options"><span class="sort-asc"><i aria-hidden="true" class="fa fa-angle-up"></i></span><span class="sort-desc"><i aria-hidden="true" class="fa fa-angle-down"></i></span></div></sc-collection-sort></th><th scope="col" width="10%"> Status <sc-collection-sort column="role.status"><div class="sort-options"><span class="sort-asc"><i aria-hidden="true" class="fa fa-angle-up"></i></span><span class="sort-desc"><i aria-hidden="true" class="fa fa-angle-down"></i></span></div></sc-collection-sort></th><th scope="col" width="10%">Signup Date<sc-collection-sort column="signupDate"><div class="sort-options"><span class="sort-asc active"><i class="fa fa-angle-up" aria-hidden="true"></i></span><span class="sort-desc"><i class="fa fa-angle-down" aria-hidden="true"></i></span></div></sc-collection-sort></th></tr>
+            //Modify the table width visuals to fit the new column
+            
+            const tableElements = document.querySelector("#membersTable > thead > tr").children;
+
+            // Shorten the email column
+            tableElements[3].width = "25%";
         }
     }
 
