@@ -19,7 +19,55 @@
         var table = document.querySelector('#membersTable');
 
         if (table) {
-            alert("Table found")
+            // Create the table header element
+            createTableHeader();
+        }
+
+        function createTableHeader() {
+            const tableHead = document.createElement('th');
+            tableHead.scope = 'col';
+            tableHead.width = '10%';
+
+            // Create text node for 'Signup Date'
+            const textNode = document.createTextNode('Signup Date');
+
+            // Create the sc-collection-sort element
+            const scCollectionSort = document.createElement('sc-collection-sort');
+            scCollectionSort.setAttribute('column', 'signupDate');
+
+            // Create the div for sort-options
+            const sortOptionsDiv = document.createElement('div');
+            sortOptionsDiv.className = 'sort-options';
+
+            // Create span for ascending sort
+            const sortAscSpan = document.createElement('span');
+            sortAscSpan.className = 'sort-asc active';
+            const ascIcon = document.createElement('i');
+            ascIcon.className = 'fa fa-angle-up';
+            ascIcon.setAttribute('aria-hidden', 'true');
+            sortAscSpan.appendChild(ascIcon);
+
+            // Create span for descending sort
+            const sortDescSpan = document.createElement('span');
+            sortDescSpan.className = 'sort-desc';
+            const descIcon = document.createElement('i');
+            descIcon.className = 'fa fa-angle-down';
+            descIcon.setAttribute('aria-hidden', 'true');
+            sortDescSpan.appendChild(descIcon);
+
+            // Append the sort asc and desc to the sort-options div
+            sortOptionsDiv.appendChild(sortAscSpan);
+            sortOptionsDiv.appendChild(sortDescSpan);
+
+            // Append sort-options div to sc-collection-sort
+            scCollectionSort.appendChild(sortOptionsDiv);
+
+            // Append text node and sc-collection-sort to the tableHead
+            tableHead.appendChild(textNode);
+            tableHead.appendChild(scCollectionSort);
+
+            // Append tableHead to the table, e.g. to the first row of the thead
+            document.querySelector('thead tr').appendChild(tableHead);
         }
     }
 
