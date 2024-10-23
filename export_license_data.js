@@ -12,42 +12,32 @@
 (function() {
     'use strict';
     // Function to add the recurring service booking options
-    function addButtons() {
+    function addButton() {
         // Select the target element where buttons will be added
-        var lowerRow = document.querySelector('.modal-body');
+        var actionRow = document.querySelector("body > sc-app-root > sc-app-root > div:nth-child(2) > section > div > div > div:nth-child(1) > main > ng-component > form > div > section:nth-child(2) > header > div > div:nth-child(2) > div.page-actions");
 
-        if (lowerRow) {
-            // query the third child of the lowerRow which is a div with class 'row'
-            var row = lowerRow.children[2];
+        if (actionRow) {
+            // Create CSV export button
+            const csvButton = document.createElement('button');
+            csvButton.type = 'button';
+            csvButton.className = 'p-element btn btn-link btn-blue';
+            csvButton.setAttribute('ptooltip', 'Download perosnal information as CSV');
+            csvButton.innerHTML = '<i class="fa fa-download"></i> Download as CSV';
 
-            if (row) {
-                // Check if the button already exists to avoid adding it multiple times
-                if (!row.querySelector('.btn-primary')) {
-                    // Create the button element
-                    var button = document.createElement('button');
-                    button.innerHTML = 'Recurring Service Booking';
-                    button.className = 'btn btn-primary';
-                    button.style.marginLeft = '10px';
-                    button.style.marginRight = '10px';
-
-                    // Add the button to the row
-                    row.appendChild(button);
-                }
-            }
+            // Append button to the row div after the first child
+            actionRow.insertBefore(csvButton, actionRow.children[1]);
         }
     }
 
     // Create a MutationObserver to watch for changes in the DOM
-    const observer = new MutationObserver(() => {
-        // Check if the target (form) element is now loaded in the DOM
-        
-        /// TODO: Find the element you want to observe and insert into the querySelector below
-        // if (document.querySelector("INSERT ELEMENT TO OBSERVE HERE")) {
-        //     //wait for 0.1 seconds
-        //     setTimeout(addButtons, 100);
-        // }
-
-
+    const observer = new MutationObserver((mutations, obs) => {
+        // Check if the target (row) element is now loaded in the DOM
+        if (document.querySelector('.page-actions')) {
+            setTimeout(() => {
+                addButton(); // Add the CSV export button
+                obs.disconnect(); // Stop observing once the element is found and button is added
+            }, 200);
+        }
     });
 
     // Start observing the document for changes in the DOM
