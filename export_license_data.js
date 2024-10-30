@@ -14,7 +14,7 @@
     // Function to add the recurring service booking options
     function addButton() {
         // Select the target element where buttons will be added
-        var actionRow = document.querySelector("body > sc-app-root > sc-app-root > div:nth-child(2) > section > div > div > div:nth-child(1) > main > ng-component > form > div > section:nth-child(2) > header > div > div:nth-child(2) > div.page-actions");
+        var actionRow = document.querySelector("body > sc-app-root > sc-app-root > div:nth-child(2) > section > div > div > div:nth-child(1) > main > ng-component > form > div > section:nth-child(1) > header > div > div.col-md-4 > div.page-actions");
 
         if (actionRow) {
             // Create CSV export button
@@ -25,7 +25,7 @@
             csvButton.innerHTML = '<i class="fa fa-download"></i> Download as CSV';
 
             // Append button to the row div after the first child
-            actionRow.insertBefore(csvButton, actionRow.children[1]);
+            actionRow.insertBefore(csvButton, actionRow.children[0]);
         }
     }
 
