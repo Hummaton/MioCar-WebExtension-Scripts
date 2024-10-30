@@ -12,31 +12,28 @@
 (function() {
     'use strict';
 
-    // Function to add the recurring service booking options
     function addButtons() {
-        // Select the target element where buttons will be added
         var lowerRow = document.querySelector('.modal-footer');
+        
+        if (!lowerRow) {
+            alert('The element .modal-footer is not found in the DOM.');
+            return;
+        }
+        
+        // Check if the button already exists
+        if (!document.getElementById('recurring-booking-button')) {
+            var newButton = document.createElement('button');
 
-        if (lowerRow) {
-            // query the third child of the lowerRow which is a div with class 'row'
-            var row = lowerRow.children[2];
+            //Add the style attributes to the button
+            newButton.className = 'btn btn-success';
+            newButton.style.backgroundColor = 'maroon';
+            newButton.id = 'recurring-booking-button';
+            newButton.textContent = 'Recurring Booking';
 
-            if (row) {
-                // Check if the button already exists to avoid adding it multiple times
-                if (!row.querySelector('.btn-primary')) {
-                    // Create the button element
-                    var button = document.createElement('button');
-                    button.innerHTML = 'Recurring Service Booking';
-                    button.className = 'btn btn-primary';
-                    button.style.marginLeft = '10px';
-                    button.style.marginRight = '10px';
-
-                    // Add the button to the row
-                    row.appendChild(button);
-                }
-            }
+            lowerRow.appendChild(newButton);
         }
     }
+    
 
     function changeSingleBookingButtonName() {
         var lowerRow = document.querySelector('.modal-footer');
@@ -45,20 +42,17 @@
             var button = lowerRow.children[1];
             
             //Change the button text to 'Single Service Booking'
-            button.innerHTML = 'Single Service Booking';
+            button.innerHTML = 'Single Booking';
         }
     }
 
-    // Create a MutationObserver to watch for changes in the DOM
-    const observer = new MutationObserver((mutations, obs) => {
+    const observer = new MutationObserver((_, obs) => {
         // Check if the target (form) element is now loaded in the DOM
         if (document.querySelector(".modal-footer")) {
             //wait for 2 seconds
             setTimeout(() => {
-
-                // addButtons();   not working as of right now 
-
                 changeSingleBookingButtonName();
+                addButtons();   
                 obs.disconnect();
             }, 200);
         }
