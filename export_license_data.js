@@ -15,7 +15,7 @@
     // Function to format user data into a CSV file
     function convertToCSV() {
         // Gather user data
-        var userName = document.querySelector("body > sc-app-root > sc-app-root > div:nth-child(2) > section > div > div > div:nth-child(1) > main > ng-component > form > div > section:nth-child(1) > section > sc-personal-info-summary > div:nth-child(1) > div:nth-child(1) > div > span.innerHTML");
+        var userName = document.querySelector("body > sc-app-root > sc-app-root > div:nth-child(2) > section > div > div > div:nth-child(1) > main > ng-component > form > div > section:nth-child(1) > section > sc-personal-info-summary > div:nth-child(1) > div:nth-child(1) > div > span");
         var userEmail = document.querySelector("body > sc-app-root > sc-app-root > div:nth-child(2) > section > div > div > div:nth-child(1) > main > ng-component > form > div > section:nth-child(1) > section > sc-personal-info-summary > div:nth-child(1) > div:nth-child(2) > div > span > a");
         var userPhone = document.querySelector("body > sc-app-root > sc-app-root > div:nth-child(2) > section > div > div > div:nth-child(1) > main > ng-component > form > div > section:nth-child(1) > section > sc-personal-info-summary > div:nth-child(1) > div:nth-child(3) > div > sc-telephone-link > a > span");
         var userDOB = document.querySelector("body > sc-app-root > sc-app-root > div:nth-child(2) > section > div > div > div:nth-child(1) > main > ng-component > form > div > section:nth-child(1) > section > sc-personal-info-summary > div:nth-child(2) > div.col-md-4 > div > sc-date-display > span");
@@ -29,7 +29,7 @@
         alert(userAddress);
 
         // Comprise user info into a single row
-        const userInfo = [userName.innerHTML, userEmail, userPhone.innerHTML, userDOB.innerHTML, userAddress, userCommunity.innerHTML];
+        const userInfo = [userName.innerHTML, userEmail, userPhone.innerHTML, userDOB.innerHTML, userAddress];
     }
 
     // Function to add the recurring service booking options
