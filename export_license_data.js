@@ -15,28 +15,23 @@
     // Function to format user data into a CSV file
     function convertToCSV() {
         // Gather user data
-        var userName = document.querySelector("body > sc-app-root > sc-app-root > div:nth-child(2) > section > div > div > div:nth-child(1) > main > ng-component > form > div > section:nth-child(1) > section > sc-personal-info-summary > div:nth-child(1) > div:nth-child(1) > div > span");
+        var userName = document.querySelector("body > sc-app-root > sc-app-root > div:nth-child(2) > section > div > div > div:nth-child(1) > main > ng-component > form > div > section:nth-child(1) > section > sc-personal-info-summary > div:nth-child(1) > div:nth-child(1) > div > span.innerHTML");
         var userEmail = document.querySelector("body > sc-app-root > sc-app-root > div:nth-child(2) > section > div > div > div:nth-child(1) > main > ng-component > form > div > section:nth-child(1) > section > sc-personal-info-summary > div:nth-child(1) > div:nth-child(2) > div > span > a");
         var userPhone = document.querySelector("body > sc-app-root > sc-app-root > div:nth-child(2) > section > div > div > div:nth-child(1) > main > ng-component > form > div > section:nth-child(1) > section > sc-personal-info-summary > div:nth-child(1) > div:nth-child(3) > div > sc-telephone-link > a > span");
         var userDOB = document.querySelector("body > sc-app-root > sc-app-root > div:nth-child(2) > section > div > div > div:nth-child(1) > main > ng-component > form > div > section:nth-child(1) > section > sc-personal-info-summary > div:nth-child(2) > div.col-md-4 > div > sc-date-display > span");
         var userAddress = document.querySelector("body > sc-app-root > sc-app-root > div:nth-child(2) > section > div > div > div:nth-child(1) > main > ng-component > form > div > section:nth-child(1) > section > sc-personal-info-summary > div:nth-child(2) > div.col-md-8 > div > span > a");
         var userCommunity = document.querySelector("body > sc-app-root > sc-app-root > div:nth-child(2) > section > div > div > div:nth-child(1) > main > ng-component > form > div > section:nth-child(1) > section > sc-personal-info-summary > div.row.ng-star-inserted > div:nth-child(6) > div > span");
 
-        alert(userName);
+        // user data access check
+        alert(userName.innerHTML);
         alert(userEmail);
-        alert(userPhone);
-        alert(userDOB);
+        alert(userPhone.innerHTML);
+        alert(userDOB.innerHTML);
         alert(userAddress);
-        alert(userCommunity);
+        alert(userCommunity.innerHTML);
 
         // Comprise user info into a single row
-        const userInfo = [userName, userEmail, userPhone, userDOB, userAddress, userCommunity];
-
-        // Convert user info into CSV
-        let csvContent = "data:text/csv;charset=utf-8," + userInfo.map(e => e.join(",")).join("\n");
-
-        // Encoded CSV file ready for download
-        return encodeURI(csvContent);
+        const userInfo = [userName.innerHTML, userEmail, userPhone.innerHTML, userDOB.innerHTML, userAddress, userCommunity.innerHTML];
     }
 
     // Function to add the recurring service booking options
@@ -48,9 +43,10 @@
             // Create CSV export button
             const csvButton = document.createElement('button');
             csvButton.type = 'button';
-            csvButton.className = 'p-element btn btn-link btn-blue';
+            csvButton.className = 'p-element btn btn-link';
             csvButton.setAttribute('ptooltip', 'Download perosnal information as CSV');
             csvButton.innerHTML = '<i class="fa fa-download"></i> Download as CSV';
+            csvButton.onclick = function(){convertToCSV()}; 
             
             // Append button to the row div after the first child
             actionRow.insertBefore(csvButton, actionRow.children[0]);
