@@ -6,6 +6,8 @@
 // @author       You
 // @match        https://admin.share.car/communities/694/bookings?type=0&status=now&pageSize=10&station=0&page=1&sortColumn=pickUpDatetime&sortDirection=asc
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=share.car
+// @updateURL    https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/refs/heads/main/booking_export.js
+// @downloadURL  https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/refs/heads/main/booking_export.js
 // @grant        none
 // ==/UserScript==
 

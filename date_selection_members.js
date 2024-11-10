@@ -6,6 +6,8 @@
 // @author       You
 // @match        https://admin.share.car/communities/694/customers/members*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=share.car
+// @updateURL    https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/refs/heads/main/date_selection_members.js
+// @downloadURL  https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/refs/heads/main/date_selection_members.js
 // @grant        none
 // ==/UserScript==
 

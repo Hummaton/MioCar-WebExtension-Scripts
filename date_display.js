@@ -5,6 +5,8 @@
 // @description  try to take over the world!
 // @author       You
 // @match        https://admin.share.car/communities/694/customers/members*
+// @updateURL    https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/refs/heads/main/date_display.js
+// @downloadURL  https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/refs/heads/main/date_display.js
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=share.car
 // @grant        none
 // ==/UserScript==

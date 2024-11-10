@@ -5,6 +5,8 @@
 // @description  Add recurring booking button
 // @match        https://admin.share.car/communities/671/fleet/vehicles/*
 // @grant        none
+// @updateURL    https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/refs/heads/main/serviceBookingRepeat.js
+// @downloadURL  https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/refs/heads/main/serviceBookingRepeat.js
 // ==/UserScript==
 
 (function() {
