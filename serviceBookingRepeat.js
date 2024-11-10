@@ -39,6 +39,7 @@
     }
 
     function main() {
+        alert("hello")
         const observer = new MutationObserver(() => {
             // Check if the target (modal footer) element is now loaded in the DOM
             if (document.querySelector(".modal-footer")) {
