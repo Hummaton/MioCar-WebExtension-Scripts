@@ -43,7 +43,7 @@
             csvButton.type = 'button';
             csvButton.className = 'p-element btn btn-link';
             csvButton.setAttribute('ptooltip', 'Download perosnal information as CSV');
-            csvButton.innerHTML = '<i class="fa fa-download"></i> Download as CSV';
+            csvButton.innerHTML = '<i class="fa fa-download"></i> Export to MVR Checker';
             csvButton.onclick = function(){convertToCSV()}; 
             
             // Append button to the row div after the first child
