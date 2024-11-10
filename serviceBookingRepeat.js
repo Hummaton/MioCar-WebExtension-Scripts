@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Recurring Service Booking Addition
 // @namespace    http://tampermonkey.net/
-// @version      2024-10-14
+// @version      2024-11-09
 // @description  Add recurring booking button
 // @match        https://admin.share.car/communities/671/fleet/vehicles/*
 // @grant        none
