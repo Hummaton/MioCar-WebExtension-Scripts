@@ -28,10 +28,74 @@
         alert(userEmail);
         alert(userPhone.innerHTML);
         alert(userDOB.innerHTML);
-        alert(userAddress);
+        alert(userAddress.innerHTML);
 
         // Comprise user info into a single row
-        const userInfo = [userName.innerHTML, userEmail, userPhone.innerHTML, userDOB.innerHTML, userAddress];
+        const userInfo = [userName.innerHTML, userEmail, userPhone.innerHTML, userDOB.innerHTML, userAddress.innerHTML];
+
+        // get user address city name
+        let userAddressSplit = (userAddress.innerHTML).split(',');
+        console.log(userAddressSplit);
+        let city_name = userAddressSplit[1];
+        let isAlphabetic = /^[A-Za-z]+$/.test(city_name);
+        if (!isAlphabetic) city_name = userAddressSplit[2];
+        console.log(city_name);
+
+        // geocoding api parameters
+        const state_code = 'CA';
+        const country_code = 'USA';
+        const geocoding_apiKey = '2213ab2613bfe0a088c05f82844ca725';
+        const geocoding_apiUrl = `https://api.openweathermap.org/geo/1.0/direct?q=${city_name},${state_code},${country_code}&limit=1&appid=${geocoding_apiKey}`;
+
+        let lat = 0;
+        let lon = 0;
+        fetch( geocoding_apiUrl )
+            .then(response => {  // Handle API network response
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => { // get lat and lon from the data
+                console.log("GEOCODING DATA: ", data);
+                lat = data[0].lat;
+                lon = data[0].lon;
+            })
+            .catch(error => { // Handle any errors
+                console.error('Error:', error);
+            });
+
+        // date to unix format
+        let date = new Date(userDOB.innerHTML);
+
+        // Check if the date is valid
+        if (isNaN(date.getTime())) {
+            throw new Error('Invalid date format');
+        }
+
+        date = Math.floor(date.getTime() / 1000);
+
+        // weather api parameters
+        const start = date; // get from user birth date (Oct 5, 2008)
+        const end = date;
+        const weather_apiKey = 'c1c665b476259c5ead1d3e1a765c6951';
+        const weather_apiUrl = `https://history.openweathermap.org/data/2.5/history/city?lat=${lat}&lon=${lon}&start=${start}&end=${end}&appid=${weather_apiKey}`;
+
+        fetch( weather_apiUrl )
+            .then(response => {  // Handle API network response
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => { // log the data
+                console.log("WEATHER API DATA:", data);
+            })
+
+            .catch(error => { // Handle any errors
+                console.error('Error:', error);
+            });
+                
     }
 
     // Function to add the recurring service booking options
@@ -43,6 +107,7 @@
             // Create CSV export button
             const csvButton = document.createElement('button');
             csvButton.type = 'button';
+            csvButton.id = 'csv_button';
             csvButton.className = 'p-element btn btn-link';
             csvButton.setAttribute('ptooltip', 'Download perosnal information as CSV');
             csvButton.innerHTML = '<i class="fa fa-download"></i> Export to MVR Checker';
