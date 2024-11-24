@@ -1,11 +1,12 @@
 // ==UserScript==
-// @name         Export Booking Data button
+// @name         Booking Report Export 
 // @namespace    http://tampermonkey.net/
-// @version      2024-09-30
+// @version      2024-11-22
 // @description  try to take over the world!
 // @author       You
-// @match        https://admin.share.car/communities/694/bookings?type=0&status=now&pageSize=10&station=0&page=1&sortColumn=pickUpDatetime&sortDirection=asc
+// @match        https://admin.share.car/reports
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=share.car
+// @grant        none
 // @updateURL    https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/refs/heads/main/booking_export.js
 // @downloadURL  https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/refs/heads/main/booking_export.js
 // @grant        none
@@ -15,35 +16,37 @@
     'use strict';
 
     // Function to add the CSV export button
-    function addCSVButton() {
+    function addButton() {
         // Select the target element where the button will be added
-        var rowDiv = document.querySelector("body > sc-app-root > sc-app-root > div:nth-child(2) > section > div > div > div:nth-child(1) > main > ng-component > div.row")
+        var rowDiv = document.querySelector("body > sc-app-root > sc-app-root > div:nth-child(2) > section > div > div > div:nth-child(1) > main > ng-component > div > section > header > div > div.col-md-4.icon-links")
 
         if (rowDiv) {
-            // Create container for the CSV export button
-            const csvButtonDiv = document.createElement('div');
-            csvButtonDiv.className = "col-md-2";
-
             // Create the CSV export button
-            const csvButton = document.createElement('button');
-            csvButton.type = 'button';
-            csvButton.className = 'p-element btn btn-link';
-            csvButton.setAttribute('ptooltip', 'Download the full filtered list of members as CSV');
-            csvButton.innerHTML = '<i class="fa fa-download"></i> Download as CSV';
+            const reportExportButton = document.createElement('button');
+            reportExportButton.type = 'button';
+            reportExportButton.className = 'p-element btn btn-link';
+            reportExportButton.setAttribute('ptooltip', 'Generate a formatted CSV report of the data');
 
-            // Append the button to the container
-            csvButtonDiv.appendChild(csvButton);
+            // Create the icon element
+            const icon = document.createElement('i');
+            icon.className = 'fa fa-download';
 
-            // Append the container to the row div after the first child
-            rowDiv.insertBefore(csvButtonDiv, rowDiv.children[1]);
+            // Append the icon to the button
+            reportExportButton.appendChild(icon);
+
+            // Add button text
+            reportExportButton.appendChild(document.createTextNode(' Generate Report'));
+
+            // Append the button to the row div after the first child
+            rowDiv.insertBefore(reportExportButton, rowDiv.children[1]);
         }
     }
 
     // Create a MutationObserver to watch for changes in the DOM
-    const observer = new MutationObserver((mutations, obs) => {
+    const observer = new MutationObserver((_, obs) => {
         // Check if the target (row) element is now loaded in the DOM
-        if (document.querySelector('.row')) {
-            addCSVButton(); // Add the CSV export button
+        if (document.querySelector('.col-md-4.icon-links')) {
+            addButton(); // Add the CSV export button
             obs.disconnect(); // Stop observing once the element is found and button is added
         }
     });
