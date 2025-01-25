@@ -89,14 +89,6 @@
         }
     }
 
-    function modifyAvailabilityCheck() {
-        document.querySelector('.btn.btn-blue').addEventListener('click', function(event) {
-        // Your custom logic here
-        console.log('Button clicked!');
-        // You can prevent the default behavior if needed
-        event.preventDefault();
-        });
-    }
 
     function main() {
         const targetNode = document.body;

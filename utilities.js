@@ -4,7 +4,9 @@
 // @version      1.1
 // @description  Make a POST request with dynamic API key
 // @author       Your Name
-// @match        *://*/*
+// @updateURL    https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/refs/heads/main/utilities.js
+// @downloadURL  https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/refs/heads/main/utilities.js
+// @match        https://admin.share.car/communities/*
 // @grant        none
 // ==/UserScript==
 
