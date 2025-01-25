@@ -15,38 +15,42 @@
 
     console.log('Utilities script loaded');
 
-    // Function to retrieve the access token from a specific key
-    function retrieveAccessToken() {
-        const key = 'oauth'; // Specify the key containing the token
+    /**
+     * Retrieves a value from the browser's localStorage and parses it as JSON.
+     *
+     * @param {string} key - The key of the item to retrieve from localStorage.
+     * @returns {any|null} The parsed value from localStorage, or null if the key is not found or an error occurs.
+     
+       Example usage:
+       const accessToken = getBrowserStorageValue('oauth')?.access_token;
+       const activeCommunityId = getBrowserStorageValue('activeCommunityId');
+    */
 
+    function getBrowserStorageValue(key) {
         try {
             const value = localStorage.getItem(key);
             if (value) {
                 const parsedValue = JSON.parse(value);
-                if (parsedValue.access_token) {
-                    return parsedValue.access_token;
-                } else {
-                    console.warn('Access token not found in the specified key.');
-                }
+                return parsedValue;
             } else {
-                console.warn('Specified key not found in localStorage.');
+                console.warn(`Specified key "${key}" not found in localStorage.`);
             }
         } catch (error) {
             console.error(`Error parsing the key: ${key}`, error);
         }
 
-        return null; // Return null if no access token is found
+        return null; // Return null if no value is found
     }
 
     // Make the function available globally but protect against overwriting
-    if (!window.retrieveAccessToken) {
-        Object.defineProperty(window, 'retrieveAccessToken', {
-            value: retrieveAccessToken,
+    if (!window.getBrowserStorageValue) {
+        Object.defineProperty(window, 'getBrowserStorageValue', {
+            value: getBrowserStorageValue,
             writable: false, // Prevent overwriting
             configurable: false, // Prevent redefinition
         });
-        console.log('retrieveAccessToken function is now globally available.');
+        console.log('getBrowserStorageValue function is now globally available.');
     } else {
-        console.warn('retrieveAccessToken is already defined and will not be overwritten.');
+        console.warn('getBrowserStorageValue is already defined and will not be overwritten.');
     }
 })();
