@@ -4,8 +4,9 @@
 // @version      2025-01-21
 // @description  try to take over the world!
 // @author       You
-// @match        *://*/*
+// @match        https://admin.share.car/communities/*/fleet/vehicles/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=share.car
+// @require      https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/main/utilities.js
 // @grant        none
 // ==/UserScript==
 
