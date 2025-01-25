@@ -1,12 +1,12 @@
 // ==UserScript==
 // @name         Signup Date Display
 // @namespace    http://tampermonkey.net/
-// @version      2024-09-30
-// @description  try to take over the world!
+// @version      2025-01-25
+// @description  Display a signup date column in the members table for filtering functionality in the future
 // @author       You
-// @match        https://admin.share.car/communities/694/customers/members*
-// @updateURL    https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/refs/heads/main/date_display.js
-// @downloadURL  https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/refs/heads/main/date_display.js
+// @match        https://admin.share.car/communities/*/customers/members*
+// @updateURL    https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/refs/heads/main/signupDateDisplay.js
+// @downloadURL  https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/refs/heads/main/signupDateDisplay.js
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=share.car
 // @grant        none
 // ==/UserScript==

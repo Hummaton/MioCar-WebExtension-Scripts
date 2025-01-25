@@ -1,12 +1,12 @@
 // ==UserScript==
-// @name         API POST Request with Tampermonkey
+// @name         Utilities
 // @namespace    http://tampermonkey.net/
-// @version      1.1
+// @version      2025-01-25
 // @description  Make a POST request with dynamic API key
 // @author       Your Name
 // @updateURL    https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/refs/heads/main/utilities.js
 // @downloadURL  https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/refs/heads/main/utilities.js
-// @match        https://admin.share.car/communities/*
+// @match        https://admin.share.car*
 // @grant        none
 // ==/UserScript==
 

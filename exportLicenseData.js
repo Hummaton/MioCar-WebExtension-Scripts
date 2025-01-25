@@ -1,13 +1,13 @@
 // ==UserScript==
 // @name         Export License Data
 // @namespace    http://tampermonkey.net/
-// @version      2024-10-23
-// @description  try to take over the world!
+// @version      2025-01-25
+// @description  Added as a test script to export license data and will be used as a template for helping with autofilling MVR Checker form
 // @author       You
-// @match        https://admin.share.car/communities/671/customers/members/*
+// @match        https://admin.share.car/communities/*/customers/members*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=share.car
-// @updateURL    https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/refs/heads/main/export_license_data.js
-// @downloadURL  https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/refs/heads/main/export_license_data.js
+// @updateURL    https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/refs/heads/main/exportLicenseData.js
+// @downloadURL  https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/refs/heads/main/exportLicenseData.js
 // @grant        none
 // ==/UserScript==
 

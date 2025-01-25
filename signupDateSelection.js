@@ -1,21 +1,18 @@
 // ==UserScript==
-// @name         Members Page
+// @name         SignUp Date Selection
 // @namespace    http://tampermonkey.net/
-// @version      2024-09-27
+// @version      2025-01-25
 // @description  Adds date selection buttons to the members page
 // @author       You
-// @match        https://admin.share.car/communities/694/customers/members*
+// @match        https://admin.share.car/communities/*/customers/members*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=share.car
-// @updateURL    https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/refs/heads/main/date_selection_members.js
-// @downloadURL  https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/refs/heads/main/date_selection_members.js
+// @updateURL    https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/refs/heads/main/signupDateSelection.js
+// @downloadURL  https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/refs/heads/main/signupDateSelection.js
 // @grant        none
 // ==/UserScript==
 
 (function() {
     'use strict';
-
-    // Alert to indicate the script is running
-    alert("add two buttons");
 
     // Function to add the date selection buttons
     function addButtons() {
@@ -70,7 +67,7 @@
             endButtonDiv.appendChild(document.createElement('br'));
             endButtonDiv.appendChild(endInput);
 
-            // Append the container to the form 
+            // Append the container to the form
             filterForm.appendChild(endButtonDiv);
         }
     }
@@ -86,8 +83,8 @@
 
     // Start observing the document for changes in the DOM
     observer.observe(document, {
-        childList: true, 
-        subtree: true   
+        childList: true,
+        subtree: true
     });
 
 })();

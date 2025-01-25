@@ -1,13 +1,13 @@
 // ==UserScript==
 // @name         Booking Report Export 
 // @namespace    http://tampermonkey.net/
-// @version      2024-11-22
-// @author       You
+// @version      2025-01-25
+// @description  Adds a button to export booking reports as CSV
 // @match        https://admin.share.car/reports
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=share.car
 // @grant        none
-// @updateURL    https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/refs/heads/main/booking_export.js
-// @downloadURL  https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/refs/heads/main/booking_export.js
+// @updateURL    https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/refs/heads/main/bookingExport.js
+// @downloadURL  https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/refs/heads/main/bookingExport.js
 // @grant        none
 // ==/UserScript==
 

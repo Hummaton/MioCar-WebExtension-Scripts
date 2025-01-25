@@ -1,10 +1,11 @@
 // ==UserScript==
-// @name         Recurring Service Booking Addition
+// @name         Recurring Service Booking
 // @namespace    http://tampermonkey.net/
-// @version      2024-11-09
+// @version      2025-01-25
 // @description  Add recurring booking button
 // @match        https://admin.share.car/communities/*/fleet/vehicles/*
 // @grant        none
+// @require      https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/main/utilities.js
 // @updateURL    https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/refs/heads/main/serviceBookingRepeat.js
 // @downloadURL  https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/refs/heads/main/serviceBookingRepeat.js
 // ==/UserScript==
@@ -87,15 +88,6 @@
 
             serviceBookingMenuRow.appendChild(endDateDiv);
         }
-    }
-
-    function modifyAvailabilityCheck() {
-        document.querySelector('.btn.btn-blue').addEventListener('click', function(event) {
-        // Your custom logic here
-        console.log('Button clicked!');
-        // You can prevent the default behavior if needed
-        event.preventDefault();
-        });
     }
 
     function main() {
