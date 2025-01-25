@@ -20,6 +20,9 @@
         const hours = String(date.getHours()).padStart(2, '0');
         const minutes = String(date.getMinutes()).padStart(2, '0');
         const seconds = String(date.getSeconds()).padStart(2, '0');
+
+        const formattedDate = '${year}-${month}-${day} ${hours}:${minutes}:${seconds}';
+        return formattedDate;
     }
 
     function validateInputs() {
@@ -60,6 +63,30 @@
         }
 
         // Create payload
+        const pickup_datetime_string = convert_datetime_to_string(pickup_datetime_obj);
+        const dropoff_datetime_string = convert_datetime_to_string(drop_off_time_element);
+        const type = "service"; // TODO: check if this changes
+        const purpose = purpose_element.value;
+        const dry_run = true; // TODO: confirm this does not change
+
+        // Get vehicle ID
+        const vehicle_id_element = document.querySelector("body > sc-app-root > sc-app-root > div:nth-child(2) > section > div > div > div:nth-child(1) > main > ng-component > div > section:nth-child(1) > form > header > div > div.col-md-7 > div > div.title-data-item.strong.ng-star-inserted");
+        const vehicle_id = parseInt(vehicle_id_element.innerHTML);
+
+        // Get community ID
+        const community_id = ; 
+
+        const payload = {
+            'pickUpDatetime': pickup_datetime_string,
+            'dropOffDatetime': dropoff_datetime_string,
+            'type': type,
+            'vehicle': vehicle_id,
+            'purpose': purpose,
+            'dry-run': dry_run,
+            'community': community_id
+        }
+        alert(payload);
+        return payload;
 
     }
 
