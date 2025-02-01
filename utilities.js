@@ -44,8 +44,8 @@
 
 
     function CRITICAL_ERROR(error) {
+        alert('Error has occurred. Check the console for more information.');
         console.error('Critical error:', error);
-        alert('Critical error occurred. Check the console for more information.');
 
         //TODO: Implement an API Call to Google sheet to log the error
         
