@@ -42,7 +42,16 @@
         return null; // Return null if no value is found
     }
 
-    // Make the function available globally but protect against overwriting
+
+    function CRITICAL_ERROR(error) {
+        console.error('Critical error:', error);
+        alert('Critical error occurred. Check the console for more information.');
+
+        //TODO: Implement an API Call to Google sheet to log the error
+        
+    }
+
+    // Make the retrieveAccessToken function available globally but protect against overwriting
     if (!window.getBrowserStorageValue) {
         Object.defineProperty(window, 'getBrowserStorageValue', {
             value: getBrowserStorageValue,
@@ -52,5 +61,17 @@
         console.log('getBrowserStorageValue function is now globally available.');
     } else {
         console.warn('getBrowserStorageValue is already defined and will not be overwritten.');
+    }
+
+    // Make the CRITICAL_ERROR function available globally but protect against overwriting
+    if (!window.CRITICAL_ERROR) {
+        Object.defineProperty(window, 'CRITICAL_ERROR', {
+            value: CRITICAL_ERROR,
+            writable: false, // Prevent overwriting
+            configurable: false, // Prevent redefinition
+        });
+        console.log('CRITICAL_ERROR function is now globally available.');
+    } else {
+        console.warn('CRITICAL_ERROR is already defined and will not be overwritten.');
     }
 })();
