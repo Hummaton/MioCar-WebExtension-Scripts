@@ -10,6 +10,7 @@
 // @grant        none
 // ==/UserScript==
 
+require('dotenv').config();
 (function() {
     'use strict';
 
@@ -18,40 +19,47 @@
     const UNPROCESSABLE_CONTENT = 422; // The HTTP 422 Unprocessable Content client error response status code indicates that the server understood the content type of the request content, and the syntax of the request content was correct, but it was unable to process the contained instructions.
 
     /* 'date' is the js Date object */
-    function convert_datetime_to_string(date) {
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
-        const day = String(date.getDate()).padStart(2, '0');
-        const hours = String(date.getHours()).padStart(2, '0');
-        const minutes = String(date.getMinutes()).padStart(2, '0');
-        const seconds = String(date.getSeconds()).padStart(2, '0');
 
-        const formattedDate = '${year}-${month}-${day} ${hours}:${minutes}:${seconds}';
-        return formattedDate;
+    function convert_datetime_to_string(date) {
+        if (date instanceof Date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
+            const day = String(date.getDate()).padStart(2, '0');
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            const seconds = String(date.getSeconds()).padStart(2, '0');
+
+            var formattedDate = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+            //console.log("FORMATTED DATE: ", formattedDate);
+            return formattedDate;
+        } else {
+            console.error("Not a valid Date object");
+        }
+        return null;
     }
 
     function repeat_interval_to_int(repeat_interval) {
         // ['Daily', 'Weekly', 'Bi-Weekly', 'Monthly', 'Yearly']
         var repeat_interval_int = 0;
         switch(repeat_interval) {
-            case 'Daily':
+            case 'daily':
                 repeat_interval_int = 1;
                 break;
-            case 'Weekly':
+            case 'weekly':
                 repeat_interval_int = 7;
                 break;
-            case 'Bi-Weekly':
+            case 'bi-weekly':
                 repeat_interval_int = 14;
                 break;
-            case 'Monthly':
+            case 'monthly':
                 repeat_interval_int = 30;
                 break;
-            case 'Yearly':
+            case 'yearly':
                 repeat_interval_int = 365;
                 break;
             default:
                 alert('Invalid repeat interval type');
-                console.log('Invalid repeat interval type');
+                console.log('Invalid repeat interval type:', repeat_interval);
         }
 
         return repeat_interval;
@@ -95,19 +103,22 @@
 
         // Create payload
         const pickup_datetime_string = convert_datetime_to_string(pickup_datetime_obj);
-        const dropoff_datetime_string = convert_datetime_to_string(drop_off_time_element);
+        const dropoff_datetime_string = convert_datetime_to_string(dropoff_datetime_obj);
         const type = "service"; // TODO: check if this changes
         const purpose = purpose_element.value;
         const dry_run = true; // TODO: confirm this does not change
         const repeat_interval = repeat_interval_to_int(repeat_interval_element.value);
         const end_datetime_string = convert_datetime_to_string(input_end_datetime_obj);
 
-        // Get vehicle ID
-        const vehicle_id_element = document.querySelector("body > sc-app-root > sc-app-root > div:nth-child(2) > section > div > div > div:nth-child(1) > main > ng-component > div > section:nth-child(1) > form > header > div > div.col-md-7 > div > div.title-data-item.strong.ng-star-inserted");
-        const vehicle_id = parseInt(vehicle_id_element.innerHTML);
-
         // Get community ID
         const community_id = getBrowserStorageValue('activeCommunityId');
+
+        // Get vehicle ID
+        const vehicle_id_element = document.querySelector("body > sc-app-root > sc-app-root > div:nth-child(2) > section > div > div > div:nth-child(1) > main > ng-component > div > section:nth-child(1) > form > header > div > div.col-md-7 > div > div.title-data-item.strong.ng-star-inserted");
+        vehicle_id_element.addEventListener("load", function() {
+            var vehicle_id = vehicle_id_element.value;
+            console.log("VEHICLE ID", vehicle_id);
+        });
 
         const payload = {
             'pickUpDatetime': pickup_datetime_string,
@@ -120,7 +131,7 @@
             'repeat-interval': repeat_interval,
             'endDatetime': end_datetime_string
         }
-        alert(payload);
+        //alert(payload);
         return payload;
 
     }
@@ -130,14 +141,24 @@
         const dropoff_datetime_obj = new Date(payload.dropoff_datetime_string);
         const repeat_end_datetime_obj = new Date(payload.endDatetime);
         const repeat_interval_int = payload.repeat_interval;
+        console.log("Checking availabiality of intervals of" + repeat_interval_int + " starting from " + convert_datetime_to_string(pickup_datetime_obj));
 
         // POST arguments
-        const url = ; // TODO: api endpoint? 
+        const url = POST_URL; // TODO: figure out safe usage of url and header referer (rn is stored in local .env)
         const apiKey = getBrowserStorageValue('oauth')?.access_token;
         const headers = {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`,
+            'Referer': POST_HEADERS_REFERER,
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+            'sec-ch-ua': '"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
+            'sec-ch-ua-mobile': '?0',
+            'sec-ch-ua-platform': '"macOS"'
         };
 
         var bad_dates = [];
+        var good_dates = [];
         var curr_pickup_datetime_obj = pickup_datetime_obj;
         var curr_dropoff_datetime_obj = dropoff_datetime_obj;
         while (curr_pickup_datetime_obj <= repeat_end_datetime_obj) {
@@ -152,9 +173,10 @@
             };
 
             // Send POST to server
+            var response;
             try {
                 console.log('Attempting to send POST request...');
-                const response = await fetch(url, {
+                response = await fetch(url, {
                     method: 'POST',
                     headers: headers,
                     body: JSON.stringify(response_payload)
@@ -163,15 +185,16 @@
             } catch (error) {
                 console.error('Error making POST request:', error);
             }
-            
+
             // Handle POST responses
             if (!(response.status == CREATED)) {
                 // TODO: Check for 4** errors and handle below
+                console.log('HANDLING ERROR: ', response.status)
                 // Add unknown errors to google sheets
-            }
-            
-            if (response.status == UNPROCESSABLE_CONTENT) {
+            } else if (response.status == UNPROCESSABLE_CONTENT) {
                 bad_dates.append(convert_datetime_to_string(curr_pickup_datetime_obj));
+            } else {
+                good_dates.append(convert_datetime_to_string(curr_pickup_datetime_obj));
             }
 
             // Increment pickup and dropoff datetimes by the repeat interval
@@ -182,6 +205,7 @@
 
         if (bad_dates.length == 0) {
             alert("All dates available"); // TODO: Display nice response to user
+            console.log(good_dates);
         } else {
             var output = "Bad Dates: ";
             for (let i=0; i < bad_dates.length; i++) {
@@ -191,23 +215,32 @@
         }
     }
 
-
-    const intervalId = setInterval(() => {
+    const booking_interval_id = setInterval(() => {
         // Check if the "Check Availability" button is now in the DOM
-        var check_avail_button = document.querySelector("body > sc-app-root > sc-service-booking-modal > div.modal.note-modal.fade.in > div > div > form > div.modal-footer > button.btn.btn-blue");
+        var check_avail_button = document.querySelector("#new-check-availability-button");
+
+        const vehicle_id_element = document.querySelector("body > sc-app-root > sc-app-root > div:nth-child(2) > section > div > div > div:nth-child(1) > main > ng-component > div > section:nth-child(1) > form > header > div > div.col-md-7 > div > div.title-data-item.strong.ng-star-inserted");
+        vehicle_id_element.addEventListener("load", function() {
+            var vehicle_id = vehicle_id_element.value;
+            console.log("VEHICLE ID", vehicle_id);
+        });
 
         if (check_avail_button) {
             // Add the click event listener to the button
-            console.log("EVENT LISTENER ADDED");
+            console.log("VEHICLE ID", vehicle_id);
+            //console.log("EVENT LISTENER ADDED");
             check_avail_button.addEventListener("click", function () {
+                console.log("CHECKING AVAILABILITY");
                 const payload = validate_inputs();
+                console.log("PAYLOAD:", payload);
                 check_availability(payload);
             });
 
             // Stop checking once the button is found and event listener is attached
-            clearInterval(intervalId);
+            clearInterval(booking_interval_id);
         }
-        console.log("BUTTON NOT FOUND");
+
+        //console.log("BUTTON NOT FOUND");
     }, 100); // Check every 100ms
 })();
 
