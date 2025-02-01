@@ -15,36 +15,63 @@
 
     console.log('Utilities script loaded');
 
-    // Function to retrieve the access token from a specific key
-    function retrieveFromLocalStorage(key, variable) {
+    /**
+     * Retrieves a value from the browser's localStorage and parses it as JSON.
+     *
+     * @param {string} key - The key of the item to retrieve from localStorage.
+     * @returns {any|null} The parsed value from localStorage, or null if the key is not found or an error occurs.
+     
+       Example usage:
+       const accessToken = getBrowserStorageValue('oauth')?.access_token;
+       const activeCommunityId = getBrowserStorageValue('activeCommunityId');
+    */
+
+    function getBrowserStorageValue(key) {
         try {
             const value = localStorage.getItem(key);
             if (value) {
                 const parsedValue = JSON.parse(value);
-                if (parsedValue[variable]) {
-                    return parsedValue[variable];
-                } else {
-                    console.warn(`${variable} not found in the specified key.`);
-                }
+                return parsedValue;
             } else {
-                console.warn('Specified key not found in localStorage.');
+                console.warn(`Specified key "${key}" not found in localStorage.`);
             }
         } catch (error) {
             console.error(`Error parsing the key: ${key}`, error);
         }
 
-        return null; // Return null if the requested variable is not found
+        return null; // Return null if no value is found
     }
 
-    // Make the function available globally but protect against overwriting
-    if (!window.retrieveAccessToken) {
-        Object.defineProperty(window, 'retrieveAccessToken', {
-            value: retrieveAccessToken,
+
+    function CRITICAL_ERROR(error) {
+        console.error('Critical error:', error);
+        alert('Critical error occurred. Check the console for more information.');
+
+        //TODO: Implement an API Call to Google sheet to log the error
+        
+    }
+
+    // Make the retrieveAccessToken function available globally but protect against overwriting
+    if (!window.getBrowserStorageValue) {
+        Object.defineProperty(window, 'getBrowserStorageValue', {
+            value: getBrowserStorageValue,
             writable: false, // Prevent overwriting
             configurable: false, // Prevent redefinition
         });
-        console.log('retrieveAccessToken function is now globally available.');
+        console.log('getBrowserStorageValue function is now globally available.');
     } else {
-        console.warn('retrieveAccessToken is already defined and will not be overwritten.');
+        console.warn('getBrowserStorageValue is already defined and will not be overwritten.');
+    }
+
+    // Make the CRITICAL_ERROR function available globally but protect against overwriting
+    if (!window.CRITICAL_ERROR) {
+        Object.defineProperty(window, 'CRITICAL_ERROR', {
+            value: CRITICAL_ERROR,
+            writable: false, // Prevent overwriting
+            configurable: false, // Prevent redefinition
+        });
+        console.log('CRITICAL_ERROR function is now globally available.');
+    } else {
+        console.warn('CRITICAL_ERROR is already defined and will not be overwritten.');
     }
 })();
