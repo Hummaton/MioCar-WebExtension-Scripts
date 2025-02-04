@@ -45,6 +45,24 @@
 
     let DELAY_AMMOUNT = 100; // 0.1s wait time between making API requests to prevent rate limiting, server overload, packet loss, etc.
 
+    // POST arguments for booking
+    const url = POST_URL; // TODO: figure out safe usage of url and header referer
+    function get_post_header() {
+        const apiKey = getBrowserStorageValue('oauth')?.access_token;
+        const headers = {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`,
+            'Referer': POST_HEADERS_REFERER,
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+            'sec-ch-ua': '"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
+            'sec-ch-ua-mobile': '?0',
+            'sec-ch-ua-platform': '"macOS"'
+        };
+
+        return headers;
+    }
+    
     /* 'date' is the js Date object */
     function convert_datetime_to_string(date) {
         if (date instanceof Date) {
@@ -212,26 +230,16 @@
      
     }
 
+    function processBookingBadResponse() { // TODO: Handle error responses for booking
+        return;
+    }
+
     async function check_availability(payload) {
         const pickup_datetime_obj = new Date(payload.pickUpDatetime);
         const dropoff_datetime_obj = new Date(payload.dropOffDatetime);
         const repeat_end_datetime_obj = new Date(payload.endDatetime);
         const repeat_interval_int = payload['repeat-interval'];
         console.log("Checking availability of intervals of" + repeat_interval_int + " starting from " + convert_datetime_to_string(pickup_datetime_obj));
-
-        // POST arguments for checking availability
-        const url = POST_URL; // TODO: figure out safe usage of url and header referer
-        const apiKey = getBrowserStorageValue('oauth')?.access_token;
-        const headers = {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${apiKey}`,
-            'Referer': POST_HEADERS_REFERER,
-            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
-            'sec-ch-ua': '"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
-            'sec-ch-ua-mobile': '?0',
-            'sec-ch-ua-platform': '"macOS"'
-        };
 
         var bad_dates = [];
         var good_date_payloads = [];
@@ -254,7 +262,7 @@
                 console.log('Attempting to send POST request...');
                 response = await fetch(url, {
                     method: 'POST',
-                    headers: headers,
+                    headers: get_post_header(),
                     body: JSON.stringify(response_payload)
                 });
                 console.log('Status Code:', response.status);
@@ -273,14 +281,11 @@
                     'dropOffDatetime': convert_datetime_to_string(curr_dropoff_datetime_obj),
                     'type': payload.type,
                     'vehicle': payload.vehicle,
-                    'purpose': payload.purpose,
-                    'dry-run': payload["dry-run"],
-                    'community': payload.community
+                    'purpose': payload.purpose
                 };
                 good_date_payloads.push(good_date_payload);
             }
             
-
             // Increment pickup and dropoff datetimes by the repeat interval
             curr_pickup_datetime_obj.setDate(curr_pickup_datetime_obj.getDate() + repeat_interval_int);
             curr_dropoff_datetime_obj.setDate(curr_dropoff_datetime_obj.getDate() + repeat_interval_int);
@@ -303,9 +308,42 @@
         return good_date_payloads;
     }
 
+    // BOOKING FUNCTIONALITY
+    // good_date_payloads is a list of payloads for valid dates to book'
+    async function book_available_dates(good_date_payloads) {
+        for (let i=0; i<good_date_payloads.length; i++) {
+            // Send POST to server
+            var response;
+            try {
+                console.log('Attempting to send POST request...');
+                response = await fetch(url, {
+                    method: 'POST',
+                    headers: get_post_header(),
+                    body: JSON.stringify(good_date_payloads[i])
+                });
+                console.log('Status Code:', response.status);
+            } catch (error) {
+                console.error('Error making POST request:', error);
+            }
+
+            // Handle POST responses
+            if (!(response.status == CREATED)) {
+                // TODO: Check for 4** errors and handle below
+                processBookingBadResponse();
+            }
+
+            new Promise(resolve => setTimeout(resolve, 10)); // Pause for 10ms
+        }
+    }
+
+    function form_changed() { // TODO: If form was changed between checking availability and creating booking
+
+    }
+
+    
     // MAIN FUNCTION
     const booking_interval_id = setInterval(() => {
-        // Check if Repeat Interval and Repeat End Date are BOTH filled before replacing "Check Availability" button
+        // Replacing 'Check Availability Button' and add functionality
         var curr_check_avail_button = document.querySelector("body > sc-app-root > sc-service-booking-modal > div.modal.note-modal.fade.in > div > div > form > div.modal-footer > button.btn.btn-blue");
         var repeat_interval_select_element = document.querySelector("#repeatInterval");
         var repeat_end_date_input_element = document.querySelector("#input-end-date");
@@ -320,7 +358,7 @@
             new_check_avail_button.type = 'button';
             new_check_avail_button.id = 'new-check-availability-button';
             new_check_avail_button.className = 'btn btn-blue';
-            new_check_avail_button.innerHTML = 'New Check Availability';
+            new_check_avail_button.innerHTML = 'New Check Availability'; // TODO: Change to wanted button name later
 
             const check_availability_parent_div = document.querySelector("body > sc-app-root > sc-service-booking-modal > div.modal.note-modal.fade.in > div > div > form > div.modal-footer");
             check_availability_parent_div.insertBefore(new_check_avail_button, check_availability_parent_div.children[1]);
@@ -328,13 +366,46 @@
             // Add the click event listener to the button
             new_check_avail_button.addEventListener("click", function () {
                 console.log("CHECKING AVAILABILITY");
-                const payload = validate_inputs();
-                check_availability(payload);
+                check_availability(validate_inputs());
             });
 
             // Stop checking once the button is found and event listener is attached
             clearInterval(booking_interval_id);
         }
+
+        // Replacing 'Create Booking' button and add functionality
+        var curr_create_booking_button = document.querySelector("body > sc-app-root > sc-service-booking-modal > div.modal.note-modal.fade.in > div > div > form > div.modal-footer > button.btn.btn-success");
+        var new_create_booking_element = document.querySelector("#new-create-booking-button");
+
+        if (curr_create_booking_button && !new_create_booking_element && repeat_interval_select_element.value != 'undefined' && repeat_end_date_input_element.value != '') {
+            console.log("Remove Create Booking");
+            curr_create_booking_button.style.display = 'none';
+
+            const new_create_booking_button = document.createElement('button');
+            new_create_booking_button.type = 'button';
+            new_create_booking_button.id = 'new-create-booking-button';
+            new_create_booking_button.className = 'btn btn-success';
+            new_create_booking_button.innerHTML = 'New Create Booking'; // TODO: Change to wanted button name later
+
+            const create_booking_parent_div = document.querySelector("body > sc-app-root > sc-service-booking-modal > div.modal.note-modal.fade.in > div > div > form > div.modal-footer");
+            create_booking_parent_div.insertBefore(new_create_booking_button, create_booking_parent_div.children[2]);
+
+            new_create_booking_button.addEventListener("click", function () {
+                console.log("CREATE BOOKING");
+                const good_date_payloads = check_availability(validate_inputs());
+
+                if (form_changed()) {
+                    // TODO: Reprompt user to recheck availability
+                } else {
+                    book_available_dates(good_date_payloads); // TODO: add create booking functionality
+                }
+                
+            });
+
+            // Stop checking once the button is found and event listener is attached
+            clearInterval(booking_interval_id);
+        }
+
     }, 100); // Check every 100ms
 })();
 
