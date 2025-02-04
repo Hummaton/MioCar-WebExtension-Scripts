@@ -6,7 +6,7 @@
 // @author       You
 // @match        https://admin.share.car/communities/*/fleet/vehicles/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=share.car
-// @require      https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/main/utilities.js
+// @require      https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/serviceBooking_dev/utilities.js
 // @grant        none
 // ==/UserScript==
 
@@ -15,8 +15,35 @@
     var vehicle_id_str;
 
     /* HTTP Responses */
-    const CREATED = 201; // The HTTP 201 Created successful response status code indicates that the HTTP request has led to the creation of a resource.
-    const UNPROCESSABLE_CONTENT = 422; // The HTTP 422 Unprocessable Content client error response status code indicates that the server understood the content type of the request content, and the syntax of the request content was correct, but it was unable to process the contained instructions.
+    // The HTTP 201 Created successful response status code indicates that the HTTP request has led to the creation of a resource.
+    const CREATED = 201; 
+    
+    /* The HyperText Transfer Protocol (HTTP) 400 Bad Request response status code indicates that the server cannot or will not process the request due to 
+    something that is perceived to be a client error (e.g., malformed request syntax, invalid request message framing, or deceptive request routing). */ 
+    const BAD_REQUEST = 400; 
+
+    // The HTTP 401 Unauthorized client error status response code indicates that the request has not been applied because it lacks valid authentication credentials for the target resource.
+    const INVALID_TOKEN = 401; 
+
+    // The HTTP 403 Forbidden client error status response code indicates that the server understood the request but refuses to authorize it.
+    const FORBIDDEN = 403; 
+
+    // The HTTP 404 Not Found client error response code indicates that the server can't find the requested resource.
+    const NOT_FOUND = 404;
+    
+    // The HTTP 422 Unprocessable Content client error response status code indicates that the server understood the content type of the request content, and the syntax of the request content was correct, but it was unable to process the contained instructions.
+    const UNPROCESSABLE_CONTENT = 422; 
+
+    // The HTTP 429 Too Many Requests response status code indicates the user has sent too many requests in a given amount of time ("rate limiting").
+    const TOO_MANY_REQUESTS = 429; 
+
+    // The HTTP 500 Internal Server Error server error response code indicates that the server encountered an unexpected condition that prevented it from fulfilling the request.
+    const INTERNAL_SERVER_ERROR = 500;
+
+    // The HTTP 503 Service Unavailable server error response code indicates that the server is not ready to handle the request.
+    const SERVICE_UNAVAILABLE = 503;
+
+    let DELAY_AMMOUNT = 100; // 0.1s wait time between making API requests to prevent rate limiting, server overload, packet loss, etc.
 
     /* 'date' is the js Date object */
     function convert_datetime_to_string(date) {
@@ -132,6 +159,59 @@
 
     }
 
+    function processBadResponse(response, bad_dates, headers, body, curr_pickup_datetime_obj) {
+        let errorString = "";
+        switch(response.status) {
+            case BAD_REQUEST:
+                errorString = "Bad Request for recurring booking script\n API Call Headers: " + headers + "\nAPI Call Body: " + body + "\nResponse: " + response;
+                break;
+            case (INVALID_TOKEN || FORBIDDEN):
+                errorString = "Invalid Token or Forbidden Access for recurring booking script\n API Call Headers: " + headers + "\nAPI Call Body: " + body + "\nResponse: " + response;
+                /* Since we plan to retrieve the token from the browser's localStorage right before making the API call, 
+                we can assume that we are getting the most up to date key. Highly unlikely that reattempting the request will work. 
+                so we will not retry the request. */
+                break;
+            case NOT_FOUND:
+                errorString = "API endpoint not found for recurring booking script\n API Call Headers: " + headers + "\nAPI Call Body: " + body + "\nResponse: " + response;
+                break;
+            case UNPROCESSABLE_CONTENT:
+                console.log('Conflicting date found:', convert_datetime_to_string(curr_pickup_datetime_obj));
+                bad_dates.append(convert_datetime_to_string(curr_pickup_datetime_obj));
+                return;
+            case TOO_MANY_REQUESTS:
+                DELAY_AMMOUNT = DELAY_AMMOUNT * 1.8; // Increase delay by 80%
+                errorString = "Too many requests for recurring booking script\n API Call Headers: " + headers + "\nAPI Call Body: " + body + "\nResponse: " + response;
+                errorString += "\nDelay increased to: " + DELAY_AMMOUNT;
+
+                if (DELAY_AMMOUNT > 3000) {
+                    console.log('Delay is too long, stopping requests');
+                    alert('API issue detected, please try again later. Developers have been notified');
+                    errorString += "\nDelay is too long, stopping requests";
+                    CRITICAL_ERROR(errorString);
+                    return;
+                }
+                break;
+            case INTERNAL_SERVER_ERROR:
+                console.log('Internal Server Error, please try again later');
+                alert('Internal Server Error for ShareCar servers, please try again later');
+                break;
+            case SERVICE_UNAVAILABLE:
+                console.log('Service Unavailable');
+                alert('ShareCar servers unavailable, please try again later');
+                break;
+            default:
+                console.log('An unexpected error occurred: ', response.status);
+                console.log('Response:', response); 
+                alert('An unexpected error occurred, please try again later');
+                errorString = "Unexpected error for recurring booking script\n API Call Headers: " + headers + "\nAPI Call Body: " + body + "\nResponse: " + response;
+                break;           
+        }
+
+        //API Call to Google sheet to log the error (future development) 
+        CRITICAL_ERROR(errorString);
+     
+    }
+
     async function check_availability(payload) {
         const pickup_datetime_obj = new Date(payload.pickUpDatetime);
         const dropoff_datetime_obj = new Date(payload.dropOffDatetime);
@@ -183,12 +263,8 @@
             }
 
             // Handle POST responses
-            if (!(response.status == CREATED)) {
-                // TODO: Check for 4** errors and handle below
-                console.log('HANDLING ERROR: ', response.status)
-                // Add unknown errors to google sheets
-                bad_dates.push(convert_datetime_to_string(curr_pickup_datetime_obj));
-            } else if (response.status == UNPROCESSABLE_CONTENT) {
+            if (!(response.status == CREATED)) {                
+                processBadResponse(response, bad_dates, headers, body, convert_datetime_to_string(curr_pickup_datetime_obj));
                 bad_dates.push(convert_datetime_to_string(curr_pickup_datetime_obj));
             } else {
                 // Create payloads for valid dates to use for booking
@@ -203,12 +279,13 @@
                 };
                 good_date_payloads.push(good_date_payload);
             }
+            
 
             // Increment pickup and dropoff datetimes by the repeat interval
             curr_pickup_datetime_obj.setDate(curr_pickup_datetime_obj.getDate() + repeat_interval_int);
             curr_dropoff_datetime_obj.setDate(curr_dropoff_datetime_obj.getDate() + repeat_interval_int);
 
-            new Promise(resolve => setTimeout(resolve, 10)); // Pause for 10ms
+            new Promise(resolve => setTimeout(resolve, DELAY_AMMOUNT)); // Pause for 10ms
         }
 
         if (bad_dates.length == 0) {
@@ -226,6 +303,7 @@
         return good_date_payloads;
     }
 
+    // MAIN FUNCTION
     const booking_interval_id = setInterval(() => {
         // Check if the "Check Availability" button is now in the DOM
         var check_avail_button = document.querySelector("#new-check-availability-button");
