@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         Get Booking Inputs
+// @name         Validate Bookings
 // @namespace    http://tampermonkey.net/
 // @version      2025-01-21
 // @description  try to take over the world!
@@ -10,16 +10,15 @@
 // @grant        none
 // ==/UserScript==
 
-require('dotenv').config();
 (function() {
     'use strict';
+    var vehicle_id_str;
 
     /* HTTP Responses */
     const CREATED = 201; // The HTTP 201 Created successful response status code indicates that the HTTP request has led to the creation of a resource.
     const UNPROCESSABLE_CONTENT = 422; // The HTTP 422 Unprocessable Content client error response status code indicates that the server understood the content type of the request content, and the syntax of the request content was correct, but it was unable to process the contained instructions.
 
     /* 'date' is the js Date object */
-
     function convert_datetime_to_string(date) {
         if (date instanceof Date) {
             const year = date.getFullYear();
@@ -29,9 +28,7 @@ require('dotenv').config();
             const minutes = String(date.getMinutes()).padStart(2, '0');
             const seconds = String(date.getSeconds()).padStart(2, '0');
 
-            var formattedDate = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-            //console.log("FORMATTED DATE: ", formattedDate);
-            return formattedDate;
+            return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
         } else {
             console.error("Not a valid Date object");
         }
@@ -62,7 +59,7 @@ require('dotenv').config();
                 console.log('Invalid repeat interval type:', repeat_interval);
         }
 
-        return repeat_interval;
+        return repeat_interval_int;
     }
 
     function validate_inputs() {
@@ -115,36 +112,35 @@ require('dotenv').config();
 
         // Get vehicle ID
         const vehicle_id_element = document.querySelector("body > sc-app-root > sc-app-root > div:nth-child(2) > section > div > div > div:nth-child(1) > main > ng-component > div > section:nth-child(1) > form > header > div > div.col-md-7 > div > div.title-data-item.strong.ng-star-inserted");
-        vehicle_id_element.addEventListener("load", function() {
-            var vehicle_id = vehicle_id_element.value;
-            console.log("VEHICLE ID", vehicle_id);
-        });
+        vehicle_id_str = vehicle_id_element.innerHTML;
+        var split_vehicle_id = vehicle_id_str.split(" ");
+        var vehicle_id_int = parseInt(split_vehicle_id[1]);
+        console.log("VEHICLE ID", vehicle_id_int);
 
         const payload = {
             'pickUpDatetime': pickup_datetime_string,
             'dropOffDatetime': dropoff_datetime_string,
             'type': type,
-            'vehicle': vehicle_id,
+            'vehicle': vehicle_id_int,
             'purpose': purpose,
             'dry-run': dry_run,
             'community': community_id,
             'repeat-interval': repeat_interval,
             'endDatetime': end_datetime_string
         }
-        //alert(payload);
         return payload;
 
     }
 
     async function check_availability(payload) {
         const pickup_datetime_obj = new Date(payload.pickUpDatetime);
-        const dropoff_datetime_obj = new Date(payload.dropoff_datetime_string);
+        const dropoff_datetime_obj = new Date(payload.dropOffDatetime);
         const repeat_end_datetime_obj = new Date(payload.endDatetime);
-        const repeat_interval_int = payload.repeat_interval;
-        console.log("Checking availabiality of intervals of" + repeat_interval_int + " starting from " + convert_datetime_to_string(pickup_datetime_obj));
+        const repeat_interval_int = payload['repeat-interval'];
+        console.log("Checking availability of intervals of" + repeat_interval_int + " starting from " + convert_datetime_to_string(pickup_datetime_obj));
 
-        // POST arguments
-        const url = POST_URL; // TODO: figure out safe usage of url and header referer (rn is stored in local .env)
+        // POST arguments for checking availability
+        const url = POST_URL; // TODO: figure out safe usage of url and header referer
         const apiKey = getBrowserStorageValue('oauth')?.access_token;
         const headers = {
             'Accept': 'application/json',
@@ -158,7 +154,7 @@ require('dotenv').config();
         };
 
         var bad_dates = [];
-        var good_dates = [];
+        var good_date_payloads = [];
         var curr_pickup_datetime_obj = pickup_datetime_obj;
         var curr_dropoff_datetime_obj = dropoff_datetime_obj;
         while (curr_pickup_datetime_obj <= repeat_end_datetime_obj) {
@@ -166,10 +162,10 @@ require('dotenv').config();
                 'pickUpDatetime': convert_datetime_to_string(curr_pickup_datetime_obj),
                 'dropOffDatetime': convert_datetime_to_string(curr_dropoff_datetime_obj),
                 'type': payload.type,
-                'vehicle': payload.vehicle_id,
+                'vehicle': payload.vehicle,
                 'purpose': payload.purpose,
-                'dry-run': payload.dry_run,
-                'community': payload.community_id,
+                'dry-run': payload["dry-run"],
+                'community': payload.community
             };
 
             // Send POST to server
@@ -191,56 +187,60 @@ require('dotenv').config();
                 // TODO: Check for 4** errors and handle below
                 console.log('HANDLING ERROR: ', response.status)
                 // Add unknown errors to google sheets
+                bad_dates.push(convert_datetime_to_string(curr_pickup_datetime_obj));
             } else if (response.status == UNPROCESSABLE_CONTENT) {
-                bad_dates.append(convert_datetime_to_string(curr_pickup_datetime_obj));
+                bad_dates.push(convert_datetime_to_string(curr_pickup_datetime_obj));
             } else {
-                good_dates.append(convert_datetime_to_string(curr_pickup_datetime_obj));
+                // Create payloads for valid dates to use for booking
+                const good_date_payload = {
+                    'pickUpDatetime': convert_datetime_to_string(curr_pickup_datetime_obj),
+                    'dropOffDatetime': convert_datetime_to_string(curr_dropoff_datetime_obj),
+                    'type': payload.type,
+                    'vehicle': payload.vehicle,
+                    'purpose': payload.purpose,
+                    'dry-run': payload["dry-run"],
+                    'community': payload.community
+                };
+                good_date_payloads.push(good_date_payload);
             }
 
             // Increment pickup and dropoff datetimes by the repeat interval
             curr_pickup_datetime_obj.setDate(curr_pickup_datetime_obj.getDate() + repeat_interval_int);
             curr_dropoff_datetime_obj.setDate(curr_dropoff_datetime_obj.getDate() + repeat_interval_int);
-            await delay(10); // Pause for 10ms
+
+            new Promise(resolve => setTimeout(resolve, 10)); // Pause for 10ms
         }
 
         if (bad_dates.length == 0) {
             alert("All dates available"); // TODO: Display nice response to user
-            console.log(good_dates);
         } else {
             var output = "Bad Dates: ";
             for (let i=0; i < bad_dates.length; i++) {
-                output = output + convert_datetime_to_string(bad_dates[i]);
+                output = output + bad_dates[i] + " ";
             }
             alert(output); // TODO: Display nice response to user
+            console.log("Valid Dates", good_dates);
+            console.log("Invalid Dates", bad_dates);
         }
+
+        return good_date_payloads;
     }
 
     const booking_interval_id = setInterval(() => {
         // Check if the "Check Availability" button is now in the DOM
         var check_avail_button = document.querySelector("#new-check-availability-button");
 
-        const vehicle_id_element = document.querySelector("body > sc-app-root > sc-app-root > div:nth-child(2) > section > div > div > div:nth-child(1) > main > ng-component > div > section:nth-child(1) > form > header > div > div.col-md-7 > div > div.title-data-item.strong.ng-star-inserted");
-        vehicle_id_element.addEventListener("load", function() {
-            var vehicle_id = vehicle_id_element.value;
-            console.log("VEHICLE ID", vehicle_id);
-        });
-
         if (check_avail_button) {
             // Add the click event listener to the button
-            console.log("VEHICLE ID", vehicle_id);
-            //console.log("EVENT LISTENER ADDED");
             check_avail_button.addEventListener("click", function () {
                 console.log("CHECKING AVAILABILITY");
                 const payload = validate_inputs();
-                console.log("PAYLOAD:", payload);
                 check_availability(payload);
             });
 
             // Stop checking once the button is found and event listener is attached
             clearInterval(booking_interval_id);
         }
-
-        //console.log("BUTTON NOT FOUND");
     }, 100); // Check every 100ms
 })();
 
