@@ -47,7 +47,7 @@
 
     // POST arguments for booking
     const url = POST_URL; // TODO: figure out safe usage of url and header referer
-    function get_post_header() {
+    function getPostHeader() {
         const apiKey = getBrowserStorageValue('oauth')?.access_token;
         const headers = {
             'Accept': 'application/json',
@@ -64,7 +64,7 @@
     }
     
     /* 'date' is the js Date object */
-    function convert_datetime_to_string(date) {
+    function convertDatetimeToString(date) {
         if (date instanceof Date) {
             const year = date.getFullYear();
             const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
@@ -80,7 +80,7 @@
         return null;
     }
 
-    function repeat_interval_to_int(repeat_interval) {
+    function repeatIntervalToInt(repeat_interval) {
         // ['Daily', 'Weekly', 'Bi-Weekly', 'Monthly', 'Yearly']
         var repeat_interval_int = 0;
         switch(repeat_interval) {
@@ -107,13 +107,13 @@
         return repeat_interval_int;
     }
 
-    function validate_inputs() {
+    function validateInputs() {
         // Ensure all input fields are filled
         var purpose_element = document.getElementById("inputPurpose");
         var repeat_interval_element = document.getElementById("repeatInterval");
         var input_end_date_element = document.getElementById("input-end-date");
         if (purpose_element.value == 'undefined') {
-            alert("Select a Booking Purpose");
+            alert("Select a Booking Purpose"); 
             return null;
         }
 
@@ -144,13 +144,13 @@
         }
 
         // Create payload
-        const pickup_datetime_string = convert_datetime_to_string(pickup_datetime_obj);
-        const dropoff_datetime_string = convert_datetime_to_string(dropoff_datetime_obj);
+        const pickup_datetime_string = convertDatetimeToString(pickup_datetime_obj);
+        const dropoff_datetime_string = convertDatetimeToString(dropoff_datetime_obj);
         const type = "service"; // TODO: check if this changes
         const purpose = purpose_element.value;
         const dry_run = true; // TODO: confirm this does not change
-        const repeat_interval = repeat_interval_to_int(repeat_interval_element.value);
-        const end_datetime_string = convert_datetime_to_string(input_end_datetime_obj);
+        const repeat_interval = repeatIntervalToInt(repeat_interval_element.value);
+        const end_datetime_string = convertDatetimeToString(input_end_datetime_obj);
 
         // Get community ID
         const community_id = getBrowserStorageValue('activeCommunityId');
@@ -193,8 +193,8 @@
                 errorString = "API endpoint not found for recurring booking script\n API Call Headers: " + headers + "\nAPI Call Body: " + body + "\nResponse: " + response;
                 break;
             case UNPROCESSABLE_CONTENT:
-                console.log('Conflicting date found:', convert_datetime_to_string(curr_pickup_datetime_obj));
-                bad_dates.append(convert_datetime_to_string(curr_pickup_datetime_obj));
+                console.log('Conflicting date found:', convertDatetimeToString(curr_pickup_datetime_obj));
+                bad_dates.append(convertDatetimeToString(curr_pickup_datetime_obj));
                 return;
             case TOO_MANY_REQUESTS:
                 DELAY_AMMOUNT = DELAY_AMMOUNT * 1.8; // Increase delay by 80%
@@ -234,12 +234,12 @@
         return;
     }
 
-    async function check_availability(payload) {
+    async function checkAvailability(payload) {
         const pickup_datetime_obj = new Date(payload.pickUpDatetime);
         const dropoff_datetime_obj = new Date(payload.dropOffDatetime);
         const repeat_end_datetime_obj = new Date(payload.endDatetime);
         const repeat_interval_int = payload['repeat-interval'];
-        console.log("Checking availability of intervals of" + repeat_interval_int + " starting from " + convert_datetime_to_string(pickup_datetime_obj));
+        console.log("Checking availability of intervals of" + repeat_interval_int + " starting from " + convertDatetimeToString(pickup_datetime_obj));
 
         var bad_dates = [];
         var good_date_payloads = [];
@@ -247,8 +247,8 @@
         var curr_dropoff_datetime_obj = dropoff_datetime_obj;
         while (curr_pickup_datetime_obj <= repeat_end_datetime_obj) {
             const response_payload = {
-                'pickUpDatetime': convert_datetime_to_string(curr_pickup_datetime_obj),
-                'dropOffDatetime': convert_datetime_to_string(curr_dropoff_datetime_obj),
+                'pickUpDatetime': convertDatetimeToString(curr_pickup_datetime_obj),
+                'dropOffDatetime': convertDatetimeToString(curr_dropoff_datetime_obj),
                 'type': payload.type,
                 'vehicle': payload.vehicle,
                 'purpose': payload.purpose,
@@ -262,7 +262,7 @@
                 console.log('Attempting to send POST request...');
                 response = await fetch(url, {
                     method: 'POST',
-                    headers: get_post_header(),
+                    headers: getPostHeader(),
                     body: JSON.stringify(response_payload)
                 });
                 console.log('Status Code:', response.status);
@@ -272,13 +272,13 @@
 
             // Handle POST responses
             if (!(response.status == CREATED)) {                
-                processBadResponse(response, bad_dates, headers, body, convert_datetime_to_string(curr_pickup_datetime_obj));
-                bad_dates.push(convert_datetime_to_string(curr_pickup_datetime_obj));
+                processBadResponse(response, bad_dates, headers, body, convertDatetimeToString(curr_pickup_datetime_obj));
+                bad_dates.push(convertDatetimeToString(curr_pickup_datetime_obj));
             } else {
                 // Create payloads for valid dates to use for booking
                 const good_date_payload = {
-                    'pickUpDatetime': convert_datetime_to_string(curr_pickup_datetime_obj),
-                    'dropOffDatetime': convert_datetime_to_string(curr_dropoff_datetime_obj),
+                    'pickUpDatetime': convertDatetimeToString(curr_pickup_datetime_obj),
+                    'dropOffDatetime': convertDatetimeToString(curr_dropoff_datetime_obj),
                     'type': payload.type,
                     'vehicle': payload.vehicle,
                     'purpose': payload.purpose
@@ -301,16 +301,16 @@
                 output = output + bad_dates[i] + " ";
             }
             alert(output); // TODO: Display nice response to user
-            console.log("Valid Dates", good_dates);
-            console.log("Invalid Dates", bad_dates);
         }
+        console.log("Valid Dates", good_date_payloads);
+        console.log("Invalid Dates", bad_dates);
 
         return good_date_payloads;
     }
 
     // BOOKING FUNCTIONALITY
     // good_date_payloads is a list of payloads for valid dates to book'
-    async function book_available_dates(good_date_payloads) {
+    async function bookAvailableDates(good_date_payloads) {
         for (let i=0; i<good_date_payloads.length; i++) {
             // Send POST to server
             var response;
@@ -318,7 +318,7 @@
                 console.log('Attempting to send POST request...');
                 response = await fetch(url, {
                     method: 'POST',
-                    headers: get_post_header(),
+                    headers: getPostHeader(),
                     body: JSON.stringify(good_date_payloads[i])
                 });
                 console.log('Status Code:', response.status);
@@ -336,7 +336,7 @@
         }
     }
 
-    function form_changed() { // TODO: If form was changed between checking availability and creating booking
+    function formChanged() { // TODO: If form was changed between checking availability and creating booking
 
     }
 
@@ -366,7 +366,7 @@
             // Add the click event listener to the button
             new_check_avail_button.addEventListener("click", function () {
                 console.log("CHECKING AVAILABILITY");
-                check_availability(validate_inputs());
+                checkAvailability(validateInputs());
             });
 
             // Stop checking once the button is found and event listener is attached
@@ -392,12 +392,12 @@
 
             new_create_booking_button.addEventListener("click", function () {
                 console.log("CREATE BOOKING");
-                const good_date_payloads = check_availability(validate_inputs());
+                const good_date_payloads = checkAvailability(validateInputs());
 
-                if (form_changed()) {
+                if (formChanged()) {
                     // TODO: Reprompt user to recheck availability
                 } else {
-                    book_available_dates(good_date_payloads); // TODO: add create booking functionality
+                    bookAvailableDates(good_date_payloads); // TODO: add create booking functionality
                 }
                 
             });
