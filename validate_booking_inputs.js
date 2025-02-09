@@ -67,23 +67,6 @@
         return headers;
     }
     
-    /* 'date' is the js Date object */
-    function convertDatetimeToString(date) {
-        if (date instanceof Date) {
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
-            const day = String(date.getDate()).padStart(2, '0');
-            const hours = String(date.getHours()).padStart(2, '0');
-            const minutes = String(date.getMinutes()).padStart(2, '0');
-            const seconds = String(date.getSeconds()).padStart(2, '0');
-
-            return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-        } else {
-            console.error("Not a valid Date object");
-        }
-        return null;
-    }
-
     function repeatIntervalToInt(repeat_interval) {
         // ['Daily', 'Weekly', 'Bi-Weekly', 'Monthly', 'Yearly']
         var repeat_interval_int = 0;
