@@ -11,7 +11,7 @@
 // ==/UserScript==
 
 (function() {
-    'use strict';
+    'use strict'; 
     var vehicle_id_str;
 
     /* HTTP Responses */
@@ -45,15 +45,19 @@
 
     let DELAY_AMMOUNT = 100; // 0.1s wait time between making API requests to prevent rate limiting, server overload, packet loss, etc.
 
-    // POST arguments for booking
-    const url = POST_URL; // TODO: figure out safe usage of url and header referer
+    // POST arguments for API call 
+    /************* FILL IN FOR PRODUCTION SCRIPT  */
+    const url = API_ENDPOINT; 
+    const referer = POST_HEADERS_REFERER;
+    /************* FILL IN FOR PRODUCTION SCRIPT  */
+
     function getPostHeader() {
         const apiKey = getBrowserStorageValue('oauth')?.access_token;
         const headers = {
             'Accept': 'application/json',
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${apiKey}`,
-            'Referer': POST_HEADERS_REFERER,
+            'Referer': referer,
             'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
             'sec-ch-ua': '"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
             'sec-ch-ua-mobile': '?0',
@@ -146,9 +150,9 @@
         // Create payload
         const pickup_datetime_string = convertDatetimeToString(pickup_datetime_obj);
         const dropoff_datetime_string = convertDatetimeToString(dropoff_datetime_obj);
-        const type = "service"; // TODO: check if this changes
+        const type = "service"; 
         const purpose = purpose_element.value;
-        const dry_run = true; // TODO: confirm this does not change
+        const dry_run = true; // Dry run paramter required to check availability
         const repeat_interval = repeatIntervalToInt(repeat_interval_element.value);
         const end_datetime_string = convertDatetimeToString(input_end_datetime_obj);
 
@@ -158,8 +162,7 @@
         // Get vehicle ID
         const vehicle_id_element = document.querySelector("body > sc-app-root > sc-app-root > div:nth-child(2) > section > div > div > div:nth-child(1) > main > ng-component > div > section:nth-child(1) > form > header > div > div.col-md-7 > div > div.title-data-item.strong.ng-star-inserted");
         vehicle_id_str = vehicle_id_element.innerHTML;
-        var split_vehicle_id = vehicle_id_str.split(" ");
-        var vehicle_id_int = parseInt(split_vehicle_id[1]);
+        var vehicle_id_int = parseInt(vehicle_id_str.split(" ")[1]);
         console.log("VEHICLE ID", vehicle_id_int);
 
         const payload = {
@@ -177,35 +180,35 @@
 
     }
 
-    function processBadResponse(response, bad_dates, headers, body, curr_pickup_datetime_obj) {
-        let errorString = "";
+    function processBadResponse(response, bad_dates, headers, body, curr_pickup_datetime) {
+        let error_string = "";
         switch(response.status) {
             case BAD_REQUEST:
-                errorString = "Bad Request for recurring booking script\n API Call Headers: " + headers + "\nAPI Call Body: " + body + "\nResponse: " + response;
+                error_string = "Bad Request for recurring booking script\n API Call Headers: " + headers + "\nAPI Call Body: " + body + "\nResponse: " + response;
                 break;
             case (INVALID_TOKEN || FORBIDDEN):
-                errorString = "Invalid Token or Forbidden Access for recurring booking script\n API Call Headers: " + headers + "\nAPI Call Body: " + body + "\nResponse: " + response;
+                error_string = "Invalid Token or Forbidden Access for recurring booking script\n API Call Headers: " + headers + "\nAPI Call Body: " + body + "\nResponse: " + response;
                 /* Since we plan to retrieve the token from the browser's localStorage right before making the API call, 
                 we can assume that we are getting the most up to date key. Highly unlikely that reattempting the request will work. 
                 so we will not retry the request. */
                 break;
             case NOT_FOUND:
-                errorString = "API endpoint not found for recurring booking script\n API Call Headers: " + headers + "\nAPI Call Body: " + body + "\nResponse: " + response;
+                error_string = "API endpoint not found for recurring booking script\n API Call Headers: " + headers + "\nAPI Call Body: " + body + "\nResponse: " + response;
                 break;
             case UNPROCESSABLE_CONTENT:
-                console.log('Conflicting date found:', convertDatetimeToString(curr_pickup_datetime_obj));
-                bad_dates.append(convertDatetimeToString(curr_pickup_datetime_obj));
+                console.log('Conflicting date found:', curr_pickup_datetime);
+                bad_dates.push(curr_pickup_datetime);
                 return;
             case TOO_MANY_REQUESTS:
                 DELAY_AMMOUNT = DELAY_AMMOUNT * 1.8; // Increase delay by 80%
-                errorString = "Too many requests for recurring booking script\n API Call Headers: " + headers + "\nAPI Call Body: " + body + "\nResponse: " + response;
-                errorString += "\nDelay increased to: " + DELAY_AMMOUNT;
+                error_string = "Too many requests for recurring booking script\n API Call Headers: " + headers + "\nAPI Call Body: " + body + "\nResponse: " + response;
+                error_string += "\nDelay increased to: " + DELAY_AMMOUNT;
 
                 if (DELAY_AMMOUNT > 3000) {
                     console.log('Delay is too long, stopping requests');
                     alert('API issue detected, please try again later. Developers have been notified');
-                    errorString += "\nDelay is too long, stopping requests";
-                    CRITICAL_ERROR(errorString);
+                    error_string += "\nDelay is too long, stopping requests";
+                    criticalError(error_string);
                     return;
                 }
                 break;
@@ -221,12 +224,12 @@
                 console.log('An unexpected error occurred: ', response.status);
                 console.log('Response:', response); 
                 alert('An unexpected error occurred, please try again later');
-                errorString = "Unexpected error for recurring booking script\n API Call Headers: " + headers + "\nAPI Call Body: " + body + "\nResponse: " + response;
+                error_string = "Unexpected error for recurring booking script\n API Call Headers: " + headers + "\nAPI Call Body: " + body + "\nResponse: " + response;
                 break;           
         }
 
         //API Call to Google sheet to log the error (future development) 
-        CRITICAL_ERROR(errorString);
+        criticalError(error_string);
      
     }
 
@@ -239,14 +242,16 @@
         const dropoff_datetime_obj = new Date(payload.dropOffDatetime);
         const repeat_end_datetime_obj = new Date(payload.endDatetime);
         const repeat_interval_int = payload['repeat-interval'];
-        console.log("Checking availability of intervals of" + repeat_interval_int + " starting from " + convertDatetimeToString(pickup_datetime_obj));
+        console.log("Checking availability of intervals of " + repeat_interval_int + " starting from " + convertDatetimeToString(pickup_datetime_obj) + " to " + convertDatetimeToString(repeat_end_datetime_obj));
 
         var bad_dates = [];
         var good_date_payloads = [];
         var curr_pickup_datetime_obj = pickup_datetime_obj;
         var curr_dropoff_datetime_obj = dropoff_datetime_obj;
+
+        // Incrementally check availability for each date in the range 
         while (curr_pickup_datetime_obj <= repeat_end_datetime_obj) {
-            const response_payload = {
+            const request_payload = {
                 'pickUpDatetime': convertDatetimeToString(curr_pickup_datetime_obj),
                 'dropOffDatetime': convertDatetimeToString(curr_dropoff_datetime_obj),
                 'type': payload.type,
@@ -256,14 +261,18 @@
                 'community': payload.community
             };
 
-            // Send POST to server
+            // Initialize response and POST API request fields
             var response;
+            let requestHeaders = getPostHeader();
+            let requestBody = JSON.stringify(request_payload);
+
+            // Send POST to server
             try {
                 console.log('Attempting to send POST request...');
                 response = await fetch(url, {
                     method: 'POST',
-                    headers: getPostHeader(),
-                    body: JSON.stringify(response_payload)
+                    headers: requestHeaders,
+                    body: requestBody
                 });
                 console.log('Status Code:', response.status);
             } catch (error) {
@@ -272,8 +281,7 @@
 
             // Handle POST responses
             if (!(response.status == CREATED)) {                
-                processBadResponse(response, bad_dates, headers, body, convertDatetimeToString(curr_pickup_datetime_obj));
-                bad_dates.push(convertDatetimeToString(curr_pickup_datetime_obj));
+                processBadResponse(response, bad_dates, requestHeaders, requestBody, convertDatetimeToString(curr_pickup_datetime_obj));
             } else {
                 // Create payloads for valid dates to use for booking
                 const good_date_payload = {
@@ -290,15 +298,18 @@
             curr_pickup_datetime_obj.setDate(curr_pickup_datetime_obj.getDate() + repeat_interval_int);
             curr_dropoff_datetime_obj.setDate(curr_dropoff_datetime_obj.getDate() + repeat_interval_int);
 
-            new Promise(resolve => setTimeout(resolve, DELAY_AMMOUNT)); // Pause for 10ms
+            await new Promise(resolve => setTimeout(resolve, DELAY_AMMOUNT)); // Pause for specified time to prevent rate limiting
         }
 
-        if (bad_dates.length == 0) {
+        
+        if (good_date_payloads.length == 0) {
+            alert("No dates available to book for the given range. Please choose another date"); // TODO: Display nice response to user
+        } else if (bad_dates.length == 0) {
             alert("All dates available"); // TODO: Display nice response to user
         } else {
-            var output = "Bad Dates: ";
-            for (let i=0; i < bad_dates.length; i++) {
-                output = output + bad_dates[i] + " ";
+            var output = "Bad Dates:\n";
+            for (let i = 0; i < bad_dates.length; i++) {
+                output = output + bad_dates[i] + "\n";
             }
             alert(output); // TODO: Display nice response to user
         }
@@ -311,11 +322,17 @@
     // BOOKING FUNCTIONALITY
     // good_date_payloads is a list of payloads for valid dates to book'
     async function bookAvailableDates(good_date_payloads) {
-        for (let i=0; i<good_date_payloads.length; i++) {
+
+        if (good_date_payloads.length == 0 || good_date_payloads == null) {
+            alert("No valid dates to book");
+            return;
+        }
+
+        for (let i = 0; i < good_date_payloads.length; i++) {
             // Send POST to server
             var response;
             try {
-                console.log('Attempting to send POST request...');
+                console.log('Attempting to send POST request for booking creation... on date:', good_date_payloads[i].pickUpDatetime);
                 response = await fetch(url, {
                     method: 'POST',
                     headers: getPostHeader(),
@@ -332,11 +349,11 @@
                 processBookingBadResponse();
             }
 
-            new Promise(resolve => setTimeout(resolve, 10)); // Pause for 10ms
+            await new Promise(resolve => setTimeout(resolve, DELAY_AMMOUNT)); // Pause for 10ms
         }
-    }
 
-    function formChanged() { // TODO: If form was changed between checking availability and creating booking
+        alert("All bookings attempted");
+        // TODO: ALERT USER OF ALL BOOKINGS MADE AND IF ANY WERE UNSUCCESSFUL
 
     }
 
@@ -348,6 +365,10 @@
         var repeat_interval_select_element = document.querySelector("#repeatInterval");
         var repeat_end_date_input_element = document.querySelector("#input-end-date");
         var new_check_avail_element = document.querySelector("#new-check-availability-button");
+
+        var checked_input;
+        var good_date_payloads;
+
 
         if (curr_check_avail_button && !new_check_avail_element && repeat_interval_select_element.value != 'undefined' && repeat_end_date_input_element.value != '') {
             console.log("Removed old Check Availability");
@@ -364,9 +385,12 @@
             check_availability_parent_div.insertBefore(new_check_avail_button, check_availability_parent_div.children[1]);
 
             // Add the click event listener to the button
-            new_check_avail_button.addEventListener("click", function () {
+            new_check_avail_button.addEventListener("click", async function () {
                 console.log("CHECKING AVAILABILITY");
-                checkAvailability(validateInputs());
+                checked_input = validateInputs();
+                if (checked_input) {
+                    good_date_payloads = await checkAvailability(checked_input);
+                }
             });
 
             // Stop checking once the button is found and event listener is attached
@@ -390,14 +414,18 @@
             const create_booking_parent_div = document.querySelector("body > sc-app-root > sc-service-booking-modal > div.modal.note-modal.fade.in > div > div > form > div.modal-footer");
             create_booking_parent_div.insertBefore(new_create_booking_button, create_booking_parent_div.children[2]);
 
-            new_create_booking_button.addEventListener("click", function () {
+            new_create_booking_button.addEventListener("click", async function () {
                 console.log("CREATE BOOKING");
-                const good_date_payloads = checkAvailability(validateInputs());
+                
+                var form_changed = JSON.stringify(checked_input) === JSON.stringify(validateInputs()) ? false : true;
 
-                if (formChanged()) {
-                    // TODO: Reprompt user to recheck availability
+                if (form_changed) {
+                    alert('Form changed, recheck availability');
                 } else {
-                    bookAvailableDates(good_date_payloads); // TODO: add create booking functionality
+                    console.log('Form not changed, proceed to booking');
+                    console.log('Good Date Payloads:', good_date_payloads);
+
+                    bookAvailableDates(good_date_payloads);
                 }
                 
             });

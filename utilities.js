@@ -43,7 +43,7 @@
     }
 
 
-    function CRITICAL_ERROR(error) {
+    function criticalError(error) {
         alert('Error has occurred. Check the console for more information.');
         console.error('Critical error:', error);
 
@@ -63,15 +63,15 @@
         console.warn('getBrowserStorageValue is already defined and will not be overwritten.');
     }
 
-    // Make the CRITICAL_ERROR function available globally but protect against overwriting
-    if (!window.CRITICAL_ERROR) {
-        Object.defineProperty(window, 'CRITICAL_ERROR', {
-            value: CRITICAL_ERROR,
+    // Make the criticalError function available globally but protect against overwriting
+    if (!window.criticalError) {
+        Object.defineProperty(window, 'criticalError', {
+            value: criticalError,
             writable: false, // Prevent overwriting
             configurable: false, // Prevent redefinition
         });
-        console.log('CRITICAL_ERROR function is now globally available.');
+        console.log('criticalError function is now globally available.');
     } else {
-        console.warn('CRITICAL_ERROR is already defined and will not be overwritten.');
+        console.warn('criticalError is already defined and will not be overwritten.');
     }
 })();
