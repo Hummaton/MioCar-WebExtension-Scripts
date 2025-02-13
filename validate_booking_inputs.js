@@ -400,8 +400,8 @@
         let requestHeaders = getPostHeader();
 
 
-        for (let i = 0; i < good_date_payloads.length; i++) {
-            let requestBody = JSON.stringify(good_date_payloads[i]);
+        for (let i = 0; i < valid_date_payloads.length; i++) {
+            let requestBody = JSON.stringify(valid_date_payloads[i]);
 
             // Send POST to server
             try {
@@ -420,7 +420,7 @@
             if (!(response.status == CREATED)) {
                 // TODO: Check for 4** errors and handle below
                 // Extract date of failed booking
-                var error_datetime_str = good_date_payloads[i].pickUpDatetime;
+                var error_datetime_str = valid_date_payloads[i].pickUpDatetime;
                 processBadResponse(response, error_booking_dates, requestHeaders, requestBody, error_datetime_str);
             }
             await new Promise(resolve => setTimeout(resolve, DELAY_AMMOUNT)); // Pause for 10ms
@@ -438,9 +438,9 @@
         }
 
         // Remove elements from good date payloads that are contained in error_booking_dates
-        good_date_payloads = good_date_payloads.filter(obj => !error_booking_dates.includes(obj.pickUpDatetime));
+        valid_date_payloads = valid_date_payloads.filter(obj => !error_booking_dates.includes(obj.pickUpDatetime));
 
-        console.log("Bookings created for Dates", good_date_payloads); 
+        console.log("Bookings created for Dates", valid_date_payloads); 
 
         // Create message displaying booked dates
         removeMessages();
