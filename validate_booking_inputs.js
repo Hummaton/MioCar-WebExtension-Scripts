@@ -171,9 +171,9 @@
             case (INVALID_TOKEN || FORBIDDEN):
                 error_string = "Invalid Token or Forbidden Access for recurring booking script\n API Call Headers: " + headers + "\nAPI Call Body: " + body + "\nResponse: " + response;
                 /* Since we plan to retrieve the token from the browser's localStorage right before making the API call,
-                we can assume that we are getting the most up to date key. Highly unlikely that reattempting the request will work.
-                so we will not retry the request. */
-                break;
+                we can assume that we are getting the most up to date key. If the key is invalid, the user should refresh the page" */
+                alert('Invalid API token, please refresh the page'); //TODO: Integrate this into the red error box div to display nicely
+                return;
             case NOT_FOUND:
                 error_string = "API endpoint not found for recurring booking script\n API Call Headers: " + headers + "\nAPI Call Body: " + body + "\nResponse: " + response;
                 break;
@@ -188,7 +188,7 @@
 
                 if (DELAY_AMMOUNT > 3000) {
                     console.log('Delay is too long, stopping requests');
-                    alert('API issue detected, please try again later. Developers have been notified');
+                    alert('API issue detected, please try again later. Developers have been notified'); // TODO: Integrate this into the red error box div to display nicely
                     error_string += "\nDelay is too long, stopping requests";
                     criticalError(error_string);
                     return;
@@ -196,16 +196,16 @@
                 break;
             case INTERNAL_SERVER_ERROR:
                 console.log('Internal Server Error, please try again later');
-                alert('Internal Server Error for ShareCar servers, please try again later');
+                alert('Internal Server Error for ShareCar servers, please try again later'); //TODO: Integrate this into the red error box div to display nicely
                 break;
             case SERVICE_UNAVAILABLE:
                 console.log('Service Unavailable');
-                alert('ShareCar servers unavailable, please try again later');
+                alert('ShareCar servers unavailable, please try again later'); //TODO: Integrate this into the red error box div to display nicely
                 break;
             default:
                 console.log('An unexpected error occurred: ', response.status);
                 console.log('Response:', response);
-                alert('An unexpected error occurred, please try again later');
+                alert('An unexpected error occurred, please try again later'); //TODO: Integrate this into the red error box div to display nicely
                 error_string = "Unexpected error for recurring booking script\n API Call Headers: " + headers + "\nAPI Call Body: " + body + "\nResponse: " + response;
                 break;
         }
@@ -284,6 +284,7 @@
         var valid_date_payloads = [];
         var curr_pickup_datetime_obj = pickup_datetime_obj;
         var curr_dropoff_datetime_obj = dropoff_datetime_obj;
+        let requestHeaders = getPostHeader();
 
         // Incrementally check availability for each date in the range
         while (curr_pickup_datetime_obj <= repeat_end_datetime_obj) {
@@ -299,7 +300,6 @@
 
             // Initialize response and POST API request fields
             var response;
-            let requestHeaders = getPostHeader();
             let requestBody = JSON.stringify(request_payload);
 
             // Send POST to server
@@ -393,30 +393,54 @@
             return;
         }
 
-        for (let i = 0; i < valid_date_payloads.length; i++) {
+        var error_booking_dates = [];
+
+        // Initialize response and POST API request fields
+        var response;
+        let requestHeaders = getPostHeader();
+
+
+        for (let i = 0; i < good_date_payloads.length; i++) {
+            let requestBody = JSON.stringify(good_date_payloads[i]);
+
             // Send POST to server
-            var response;
             try {
                 console.log('Attempting to send POST request for booking creation... on date:', valid_date_payloads[i].pickUpDatetime);
                 response = await fetch(url, {
                     method: 'POST',
-                    headers: getPostHeader(),
-                    body: JSON.stringify(valid_date_payloads[i])
+                    headers: requestHeaders,
+                    body: requestBody
                 });
-                console.log('Status Code:', response.status);
+                console.log('Booking made. Status Code:', response.status);
             } catch (error) {
                 console.error('Error making POST request:', error);
             }
 
             // Handle POST responses
             if (!(response.status == CREATED)) {
-                processBookingBadResponse();
+                // TODO: Check for 4** errors and handle below
+                // Extract date of failed booking
+                var error_datetime_str = good_date_payloads[i].pickUpDatetime;
+                processBadResponse(response, error_booking_dates, requestHeaders, requestBody, error_datetime_str);
             }
-
             await new Promise(resolve => setTimeout(resolve, DELAY_AMMOUNT)); // Pause for 10ms
         }
 
-        alert("All bookings attempted");
+
+        if (error_booking_dates.length == 0) {
+            alert("Bookings created!"); // TODO: Display nice response to user
+        } else {
+            var output = "Error Booking on dates:\n";
+            for (let i = 0; i < error_booking_dates.length; i++) {
+                output = output + error_booking_dates[i] + "\n";
+            }
+            alert(output); // TODO: Display nice response to user
+        }
+
+        // Remove elements from good date payloads that are contained in error_booking_dates
+        good_date_payloads = good_date_payloads.filter(obj => !error_booking_dates.includes(obj.pickUpDatetime));
+
+        console.log("Bookings created for Dates", good_date_payloads); 
 
         // Create message displaying booked dates
         removeMessages();
@@ -486,12 +510,10 @@
             create_booking_parent_div.insertBefore(new_create_booking_button, create_booking_parent_div.children[2]);
 
             new_create_booking_button.addEventListener("click", async function () {
-                console.log("CREATE BOOKING");
-
                 var form_changed = JSON.stringify(checked_input) === JSON.stringify(validateInputs()) ? false : true;
 
                 if (form_changed) {
-                    alert('Form changed, recheck availability');
+                    alert('Form changed, recheck availability'); // TODO: Change to wanted button name later
                 } else {
                     console.log('Form not changed, proceed to booking');
                     console.log('Valid Date Payloads:', valid_date_payloads);
