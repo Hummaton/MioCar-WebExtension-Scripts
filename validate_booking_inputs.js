@@ -12,7 +12,6 @@
 
 (function() {
     'use strict';
-    var vehicle_id_str;
 
     /* HTTP Responses */
     // The HTTP 201 Created successful response status code indicates that the HTTP request has led to the creation of a resource.
@@ -144,7 +143,7 @@
 
         // Get vehicle ID
         const vehicle_id_element = document.querySelector("body > sc-app-root > sc-app-root > div:nth-child(2) > section > div > div > div:nth-child(1) > main > ng-component > div > section:nth-child(1) > form > header > div > div.col-md-7 > div > div.title-data-item.strong.ng-star-inserted");
-        vehicle_id_str = vehicle_id_element.innerHTML;
+        const vehicle_id_str = vehicle_id_element.innerHTML;
         var vehicle_id_int = parseInt(vehicle_id_str.split(" ")[1]);
 
         const payload = {
@@ -228,7 +227,6 @@
             message_div.id = 'red-message';
             message_div.className = 'alert alert-danger ng-star-inserted';
             message_div.innerHTML = str;
-
             message_div.style.flex = "1";
 
             message_container_div.appendChild(message_div);
@@ -249,7 +247,6 @@
             message_div.id = 'green-message';
             message_div.className = 'alert alert-success ng-star-inserted';
             message_div.innerHTML = str;
-
             message_div.style.flex = "1";
 
             message_container_div.appendChild(message_div);
@@ -257,6 +254,12 @@
     }
 
     function removeMessages() {
+        // revert message container to old styling
+        const message_container_div = document.querySelector("body > sc-app-root > sc-service-booking-modal > div.modal.note-modal.fade.in > div > div > form > div.modal-body > div:nth-child(4) > div");
+        message_container_div.style.display = "block";
+        message_container_div.style.gap = "";
+        message_container_div.style.justifyContent = "";
+
         var green_message_div = document.querySelector("#green-message");
         if (green_message_div) {
             green_message_div.remove();
@@ -331,14 +334,25 @@
             }
 
             // Increment pickup and dropoff datetimes by the repeat interval
-            curr_pickup_datetime_obj.setDate(curr_pickup_datetime_obj.getDate() + repeat_interval_int);
-            curr_dropoff_datetime_obj.setDate(curr_dropoff_datetime_obj.getDate() + repeat_interval_int);
+            if (repeat_interval_int == 30) { // monthly
+                curr_pickup_datetime_obj.setMonth(curr_pickup_datetime_obj.getMonth() + 1);
+                curr_dropoff_datetime_obj.setMonth(curr_dropoff_datetime_obj.getMonth() + 1);
+            } else if (repeat_interval_int == 365) { // yearly
+                curr_pickup_datetime_obj.setFullYear(curr_pickup_datetime_obj.getFullYear() + 1);
+                curr_dropoff_datetime_obj.setFullYear(curr_dropoff_datetime_obj.getFullYear() + 1);
+            } else { // daily, weekly, biweekly
+                curr_pickup_datetime_obj.setDate(curr_pickup_datetime_obj.getDate() + repeat_interval_int);
+                curr_dropoff_datetime_obj.setDate(curr_dropoff_datetime_obj.getDate() + repeat_interval_int);
+            }
 
             await new Promise(resolve => setTimeout(resolve, DELAY_AMMOUNT)); // Pause for specified time to prevent rate limiting
         }
 
-        console.log("DISPLAY DATES");
-        // DISPLAY DATES
+
+        // DISPLAY AVAILABLE DATES
+        console.log("DISPLAY AVAILABLE DATES");
+        const check_avail_element = document.querySelector("#new-check-availability-button");
+        const create_booking_button = document.querySelector("#new-create-booking-button");
         if (valid_date_payloads.length == 0) {
             removeMessages();
             const only_invalid_dates_msg = "No dates available to book for the given range. Please choose another date.";
@@ -347,15 +361,16 @@
             removeMessages();
 
             var only_valid_dates_msg = "All dates available:<br />";
-
             for (let i = 0; i < valid_date_payloads.length; i++) {
                 var valid_date = new Date(valid_date_payloads[i].pickUpDatetime);
                 valid_date = valid_date.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
 
                 only_valid_dates_msg = only_valid_dates_msg + valid_date + "<br />";
             }
-
             createGreenMessage(only_valid_dates_msg);
+
+            check_avail_element.disabled = true;
+            create_booking_button.disabled = false;
         } else {
             removeMessages();
 
@@ -368,7 +383,6 @@
             }
             createGreenMessage(valid_dates_msg);
 
-
             var invalid_dates_msg = "Unavailable Dates:<br />";
             for (let i = 0; i < invalid_dates.length; i++) {
                 var invalid_date = new Date(invalid_dates[i]);
@@ -377,6 +391,9 @@
                 invalid_dates_msg = invalid_dates_msg + invalid_date + "<br />";
             }
             createRedMessage(invalid_dates_msg);
+
+            check_avail_element.disabled = true;
+            create_booking_button.disabled = false;
         }
         console.log("Valid Dates", valid_date_payloads);
         console.log("Invalid Dates", invalid_dates);
@@ -418,7 +435,6 @@
 
             // Handle POST responses
             if (!(response.status == CREATED)) {
-                // TODO: Check for 4** errors and handle below
                 // Extract date of failed booking
                 var error_datetime_str = valid_date_payloads[i].pickUpDatetime;
                 processBadResponse(response, error_booking_dates, requestHeaders, requestBody, error_datetime_str);
@@ -426,21 +442,10 @@
             await new Promise(resolve => setTimeout(resolve, DELAY_AMMOUNT)); // Pause for 10ms
         }
 
-
-        if (error_booking_dates.length == 0) {
-            alert("Bookings created!"); // TODO: Display nice response to user
-        } else {
-            var output = "Error Booking on dates:\n";
-            for (let i = 0; i < error_booking_dates.length; i++) {
-                output = output + error_booking_dates[i] + "\n";
-            }
-            alert(output); // TODO: Display nice response to user
-        }
-
         // Remove elements from good date payloads that are contained in error_booking_dates
         valid_date_payloads = valid_date_payloads.filter(obj => !error_booking_dates.includes(obj.pickUpDatetime));
 
-        console.log("Bookings created for Dates", valid_date_payloads); 
+        console.log("Bookings created for Dates", valid_date_payloads);
 
         // Create message displaying booked dates
         removeMessages();
@@ -452,6 +457,21 @@
             only_valid_dates_msg = only_valid_dates_msg + valid_date + "<br />";
         }
         createGreenMessage(only_valid_dates_msg);
+
+        if (error_booking_dates.length > 0) {
+            console.log("Error Booking for Dates", error_booking_dates);
+
+            var error_booking_dates_msg = "Error Booking Dates: <br />";
+            for (let i = 0; i < error_booking_dates.length; i++) {
+                var error_booking_date = new Date(error_booking_dates[i]);
+                error_booking_date = error_booking_date.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+
+                error_booking_dates_msg = error_booking_dates_msg + error_booking_date + "<br />";
+            }
+            createRedMessage(error_booking_dates_msg);
+        }
+
+        // TODO: What happens to buttons and how they are disabled after creating booking
     }
 
 
@@ -488,6 +508,14 @@
                 }
             });
 
+            // When form is changed, make 'check availability' button clickable and 'create booking' button unclickable
+            let form = document.querySelector("form[name='serviceBooking']");
+            form.addEventListener("change", function (event) {
+                new_check_avail_button.disabled = false;
+                var create_booking_element = document.querySelector("#new-create-booking-button");
+                create_booking_element.disabled = true;
+            });
+
             // Stop checking once the button is found and event listener is attached
             clearInterval(booking_interval_id);
         }
@@ -505,6 +533,7 @@
             new_create_booking_button.id = 'new-create-booking-button';
             new_create_booking_button.className = 'btn btn-success';
             new_create_booking_button.innerHTML = 'New Create Booking'; // TODO: Change to wanted button name later
+            new_create_booking_button.disabled = true;
 
             const create_booking_parent_div = document.querySelector("body > sc-app-root > sc-service-booking-modal > div.modal.note-modal.fade.in > div > div > form > div.modal-footer");
             create_booking_parent_div.insertBefore(new_create_booking_button, create_booking_parent_div.children[2]);
@@ -529,4 +558,3 @@
 
     }, 100); // Check every 100ms
 })();
-
