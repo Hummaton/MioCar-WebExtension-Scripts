@@ -271,6 +271,52 @@
         }
     }
 
+    function createProgressBar() {
+        // Hide the check availability and create booking buttons
+        let new_check_avail_button = document.querySelector("#new-check-availability-button");
+        let new_create_booking_button = document.querySelector("#new-create-booking-button");
+        new_check_avail_button.className = 'btn btn-blue hide-important';
+        new_create_booking_button.className = 'btn btn-success hide-important';
+
+        const check_availability_parent_div = document.querySelector("body > sc-app-root > sc-service-booking-modal > div.modal.note-modal.fade.in > div > div > form > div.modal-footer");
+        const progress_bar_container = document.createElement('div');
+        progress_bar_container.className = 'progress-bar-container-booking-form';
+        progress_bar_container.style.width = '100%';
+        progress_bar_container.style.backgroundColor = '#f3f3f3';
+        progress_bar_container.style.borderRadius = '5px';
+        progress_bar_container.style.marginTop = '10px';
+
+        const progress_bar = document.createElement('div');
+        progress_bar.className = 'progress-bar-booking-form';
+        progress_bar.style.width = '0%';
+        progress_bar.style.height = '20px';
+        progress_bar.style.backgroundColor = '#4caf50';
+        progress_bar.style.borderRadius = '5px';
+
+        progress_bar_container.appendChild(progress_bar);
+        check_availability_parent_div.appendChild(progress_bar_container);
+    }
+
+    function incrementProgressBar(completed_intervals, total_intervals) {
+        const progress_bar = document.querySelector('.progress-bar-booking-form');
+        const progress_percentage = (completed_intervals / total_intervals) * 100;
+        progress_bar.style.width = `${progress_percentage}%`;
+    }
+
+    function removeProgressBar() {
+        const progress_bar_container = document.querySelector('.progress-bar-container-booking-form');
+        
+        if (progress_bar_container) {
+            progress_bar_container.remove();
+        }
+
+        // Revert button styling
+        let new_check_avail_button = document.querySelector("#new-check-availability-button");
+        let new_create_booking_button = document.querySelector("#new-create-booking-button");
+        new_check_avail_button.className = 'btn btn-blue';
+        new_create_booking_button.className = 'btn btn-success';
+    }
+
     async function checkAvailability(payload) {
         if (payload == null) {
             alert("Invalid payload");
@@ -288,6 +334,11 @@
         var curr_pickup_datetime_obj = pickup_datetime_obj;
         var curr_dropoff_datetime_obj = dropoff_datetime_obj;
         let requestHeaders = getPostHeader();
+
+        createProgressBar();
+
+        const total_intervals = Math.ceil((repeat_end_datetime_obj - pickup_datetime_obj) / (repeat_interval_int * 24 * 60 * 60 * 1000));
+        let completed_intervals = 0;
 
         // Incrementally check availability for each date in the range
         while (curr_pickup_datetime_obj <= repeat_end_datetime_obj) {
@@ -345,9 +396,13 @@
                 curr_dropoff_datetime_obj.setDate(curr_dropoff_datetime_obj.getDate() + repeat_interval_int);
             }
 
+            completed_intervals++;
+            incrementProgressBar(completed_intervals, total_intervals);
             await new Promise(resolve => setTimeout(resolve, DELAY_AMMOUNT)); // Pause for specified time to prevent rate limiting
         }
 
+        // Remove progress bar
+        removeProgressBar();
 
         // DISPLAY AVAILABLE DATES
         console.log("DISPLAY AVAILABLE DATES");
@@ -416,6 +471,10 @@
         var response;
         let requestHeaders = getPostHeader();
 
+        createProgressBar();
+
+        const total_intervals = valid_date_payloads.length;
+        let completed_intervals = 0;
 
         for (let i = 0; i < valid_date_payloads.length; i++) {
             let requestBody = JSON.stringify(valid_date_payloads[i]);
@@ -439,8 +498,12 @@
                 var error_datetime_str = valid_date_payloads[i].pickUpDatetime;
                 processBadResponse(response, error_booking_dates, requestHeaders, requestBody, error_datetime_str);
             }
+            completed_intervals++;
+            incrementProgressBar(completed_intervals, total_intervals);
             await new Promise(resolve => setTimeout(resolve, DELAY_AMMOUNT)); // Pause for 10ms
         }
+
+        removeProgressBar();
 
         // Remove elements from good date payloads that are contained in error_booking_dates
         valid_date_payloads = valid_date_payloads.filter(obj => !error_booking_dates.includes(obj.pickUpDatetime));
