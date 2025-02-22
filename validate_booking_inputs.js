@@ -526,7 +526,9 @@
             createRedMessage(error_booking_dates_msg);
         }
 
-        // TODO: What happens to buttons and how they are disabled after creating booking
+        let new_create_booking_button = document.querySelector("#new-create-booking-button");
+        new_create_booking_button.disabled = true;
+
     }
 
 
