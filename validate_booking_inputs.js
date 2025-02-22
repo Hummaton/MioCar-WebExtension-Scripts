@@ -414,11 +414,11 @@
             createRedMessage(only_invalid_dates_msg);
         } else if (invalid_dates.length == 0) {
             removeMessages();
+            var valid_date;
 
             var only_valid_dates_msg = "All dates available:<br />";
             for (let i = 0; i < valid_date_payloads.length; i++) {
-                var valid_date = new Date(valid_date_payloads[i].pickUpDatetime);
-                valid_date = valid_date.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+                valid_date = new Date(valid_date_payloads[i].pickUpDatetime).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
 
                 only_valid_dates_msg = only_valid_dates_msg + valid_date + "<br />";
             }
@@ -431,18 +431,14 @@
 
             var valid_dates_msg = "Available Dates:<br />";
             for (let i = 0; i < valid_date_payloads.length; i++) {
-                var valid_date = new Date(valid_date_payloads[i].pickUpDatetime);
-                valid_date = valid_date.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
-
+                valid_date = new Date(valid_date_payloads[i].pickUpDatetime).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
                 valid_dates_msg = valid_dates_msg + valid_date + "<br />";
             }
             createGreenMessage(valid_dates_msg);
 
             var invalid_dates_msg = "Unavailable Dates:<br />";
             for (let i = 0; i < invalid_dates.length; i++) {
-                var invalid_date = new Date(invalid_dates[i]);
-                invalid_date = invalid_date.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
-
+                var invalid_date = new Date(invalid_dates[i]).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
                 invalid_dates_msg = invalid_dates_msg + invalid_date + "<br />";
             }
             createRedMessage(invalid_dates_msg);
@@ -514,9 +510,7 @@
         removeMessages();
         var only_valid_dates_msg = "Booked the following dates:<br />";
         for (let i = 0; i < valid_date_payloads.length; i++) {
-            var valid_date = new Date(valid_date_payloads[i].pickUpDatetime);
-            valid_date = valid_date.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
-
+            var valid_date = new Date(valid_date_payloads[i].pickUpDatetime).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
             only_valid_dates_msg = only_valid_dates_msg + valid_date + "<br />";
         }
         createGreenMessage(only_valid_dates_msg);
@@ -526,9 +520,7 @@
 
             var error_booking_dates_msg = "Error Booking Dates: <br />";
             for (let i = 0; i < error_booking_dates.length; i++) {
-                var error_booking_date = new Date(error_booking_dates[i]);
-                error_booking_date = error_booking_date.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
-
+                var error_booking_date = new Date(error_booking_dates[i]).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
                 error_booking_dates_msg = error_booking_dates_msg + error_booking_date + "<br />";
             }
             createRedMessage(error_booking_dates_msg);
@@ -561,6 +553,9 @@
 
             const check_availability_parent_div = document.querySelector("body > sc-app-root > sc-service-booking-modal > div.modal.note-modal.fade.in > div > div > form > div.modal-footer");
             check_availability_parent_div.insertBefore(new_check_avail_button, check_availability_parent_div.children[1]);
+            
+            var pickup_datetime;
+            var dropoff_datetime;
 
             // Add the click event listener to the button
             new_check_avail_button.addEventListener("click", async function () {
@@ -568,16 +563,35 @@
                 checked_input = validateInputs();
                 if (checked_input) {
                     valid_date_payloads = await checkAvailability(checked_input);
+                    // Store the pickup and dropoff datetimes for future reference
+                    pickup_datetime = checked_input.pickUpDatetime;
+                    dropoff_datetime = checked_input.dropOffDatetime;
                 }
             });
 
-            // When form is changed, make 'check availability' button clickable and 'create booking' button unclickable
+            // When form is changed, make 'check availability' button clickable and 'create booking' button unclickable. 
+            // Checks for changes in all input fields except for the pickup and dropoff datetimes (handled separately below due to issues)
             let form = document.querySelector("form[name='serviceBooking']");
             form.addEventListener("change", function (event) {
                 new_check_avail_button.disabled = false;
                 var create_booking_element = document.querySelector("#new-create-booking-button");
                 create_booking_element.disabled = true;
             });
+            
+            // Create a mutation observer to check for changes in the pickup and dropoff datetimes. 
+            var observer = new MutationObserver(function(mutations) {
+                var pickup_datetime_current = convertDatetimeToString(new Date(document.getElementById('input-pickup-time').value));
+                var dropoff_datetime_current = convertDatetimeToString(new Date(document.getElementById("input-dropoff-time").value));
+                
+                if (pickup_datetime_current != pickup_datetime || dropoff_datetime_current != dropoff_datetime) {
+                    new_check_avail_button.disabled = false;
+                    var create_booking_element = document.querySelector("#new-create-booking-button");
+                    create_booking_element.disabled = true;
+                }
+
+            });
+
+            observer.observe(document.querySelector("body > sc-app-root > sc-service-booking-modal > div.modal.note-modal.fade.in > div > div > form > div.modal-body > div:nth-child(2)"), { attributes: true, childList: true, subtree: true });
 
             // Stop checking once the button is found and event listener is attached
             clearInterval(booking_interval_id);
