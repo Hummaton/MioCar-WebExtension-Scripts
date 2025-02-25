@@ -185,22 +185,22 @@
 
                 if (DELAY_AMMOUNT > 3000) {
                     console.log('Delay is too long, stopping requests');
-                    alert('API issue detected, please try again later. Developers have been notified'); // TODO: Integrate this into the red error box div to display nicely
+                    alert('API issue detected, please try again later. Developers have been notified');
                     error_string += "\nDelay is too long, stopping requests";
                     criticalError(error_string);
                     return;
                 }
                 break;
             case INTERNAL_SERVER_ERROR:
-                alert('Internal Server Error for ShareCar servers, please try again later'); //TODO: Integrate this into the red error box div to display nicely
+                alert('Internal Server Error for ShareCar servers, please try again later');
                 break;
             case SERVICE_UNAVAILABLE:
-                alert('ShareCar servers unavailable, please try again later'); //TODO: Integrate this into the red error box div to display nicely
+                alert('ShareCar servers unavailable, please try again later');
                 break;
             default:
                 console.log('An unexpected error occurred: ', response.status);
                 console.log('Response:', response);
-                alert('An unexpected error occurred, please try again later'); //TODO: Integrate this into the red error box div to display nicely
+                alert('An unexpected error occurred, please try again later');
                 error_string = "Unexpected error for recurring booking script\n API Call Headers: " + headers + "\nAPI Call Body: " + body + "\nResponse: " + response;
                 break;
         }
@@ -443,7 +443,7 @@
     }
 
     // BOOKING FUNCTIONALITY
-    // valid_date_payloads is a list of payloads for valid dates to book'
+    // valid_date_payloads is a list of payloads for valid dates to book
     async function bookAvailableDates(valid_date_payloads) {
 
         if (valid_date_payloads.length == 0 || valid_date_payloads == null) {
@@ -536,7 +536,7 @@
             new_check_avail_button.type = 'button';
             new_check_avail_button.id = 'new-check-availability-button';
             new_check_avail_button.className = 'btn btn-blue';
-            new_check_avail_button.innerHTML = 'New Check Availability'; // TODO: Change to wanted button name later
+            new_check_avail_button.innerHTML = 'Check Availability';
 
             const check_availability_parent_div = document.querySelector("body > sc-app-root > sc-service-booking-modal > div.modal.note-modal.fade.in > div > div > form > div.modal-footer");
             check_availability_parent_div.insertBefore(new_check_avail_button, check_availability_parent_div.children[1]);
@@ -594,7 +594,7 @@
             new_create_booking_button.type = 'button';
             new_create_booking_button.id = 'new-create-booking-button';
             new_create_booking_button.className = 'btn btn-success';
-            new_create_booking_button.innerHTML = 'New Create Booking'; // TODO: Change to wanted button name later
+            new_create_booking_button.innerHTML = 'Create Booking';
             new_create_booking_button.disabled = true;
 
             const create_booking_parent_div = document.querySelector("body > sc-app-root > sc-service-booking-modal > div.modal.note-modal.fade.in > div > div > form > div.modal-footer");
