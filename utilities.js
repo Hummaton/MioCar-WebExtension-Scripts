@@ -46,7 +46,7 @@
         alert('Error has occurred. Check the console for more information.');
         console.error('Critical error:', error);
 
-        //TODO: Implement an API Call to Google sheet to log the error
+        //TODO: Implement an API Call to AWS Lambda to log the error
         
     }
 

@@ -87,7 +87,6 @@
                 break;
             default:
                 alert('Invalid repeat interval type');
-                console.log('Invalid repeat interval type:', repeat_interval);
         }
 
         return repeat_interval_int;
@@ -177,7 +176,6 @@
                 error_string = "API endpoint not found for recurring booking script\n API Call Headers: " + headers + "\nAPI Call Body: " + body + "\nResponse: " + response;
                 break;
             case UNPROCESSABLE_CONTENT:
-                console.log('Conflicting date found:', curr_pickup_datetime);
                 bad_dates.push(curr_pickup_datetime);
                 return;
             case TOO_MANY_REQUESTS:
@@ -194,11 +192,9 @@
                 }
                 break;
             case INTERNAL_SERVER_ERROR:
-                console.log('Internal Server Error, please try again later');
                 alert('Internal Server Error for ShareCar servers, please try again later'); //TODO: Integrate this into the red error box div to display nicely
                 break;
             case SERVICE_UNAVAILABLE:
-                console.log('Service Unavailable');
                 alert('ShareCar servers unavailable, please try again later'); //TODO: Integrate this into the red error box div to display nicely
                 break;
             default:
@@ -327,7 +323,6 @@
         const dropoff_datetime_obj = new Date(payload.dropOffDatetime);
         const repeat_end_datetime_obj = new Date(payload.endDatetime);
         const repeat_interval_int = payload['repeat-interval'];
-        console.log("Checking availability of intervals of " + repeat_interval_int + " starting from " + convertDatetimeToString(pickup_datetime_obj) + " to " + convertDatetimeToString(repeat_end_datetime_obj));
 
         var invalid_dates = [];
         var valid_date_payloads = [];
@@ -358,13 +353,11 @@
 
             // Send POST to server
             try {
-                console.log('Attempting to send POST request...');
                 response = await fetch(url, {
                     method: 'POST',
                     headers: requestHeaders,
                     body: requestBody
                 });
-                console.log('Status Code:', response.status);
             } catch (error) {
                 console.error('Error making POST request:', error);
             }
@@ -405,7 +398,6 @@
         removeProgressBar();
 
         // DISPLAY AVAILABLE DATES
-        console.log("DISPLAY AVAILABLE DATES");
         const check_avail_element = document.querySelector("#new-check-availability-button");
         const create_booking_button = document.querySelector("#new-create-booking-button");
         if (valid_date_payloads.length == 0) {
@@ -446,8 +438,6 @@
             check_avail_element.disabled = true;
             create_booking_button.disabled = false;
         }
-        console.log("Valid Dates", valid_date_payloads);
-        console.log("Invalid Dates", invalid_dates);
 
         return valid_date_payloads;
     }
@@ -477,15 +467,15 @@
 
             // Send POST to server
             try {
-                console.log('Attempting to send POST request for booking creation... on date:', valid_date_payloads[i].pickUpDatetime);
                 response = await fetch(url, {
                     method: 'POST',
                     headers: requestHeaders,
                     body: requestBody
                 });
-                console.log('Booking made. Status Code:', response.status);
+                //Log the booking using AWS Cloudwatch (future development)
             } catch (error) {
                 console.error('Error making POST request:', error);
+                // Log the error using AWS Cloudwatch (future development)
             }
 
             // Handle POST responses
@@ -504,8 +494,6 @@
         // Remove elements from good date payloads that are contained in error_booking_dates
         valid_date_payloads = valid_date_payloads.filter(obj => !error_booking_dates.includes(obj.pickUpDatetime));
 
-        console.log("Bookings created for Dates", valid_date_payloads);
-
         // Create message displaying booked dates
         removeMessages();
         var only_valid_dates_msg = "Booked the following dates:<br />";
@@ -516,8 +504,6 @@
         createGreenMessage(only_valid_dates_msg);
 
         if (error_booking_dates.length > 0) {
-            console.log("Error Booking for Dates", error_booking_dates);
-
             var error_booking_dates_msg = "Error Booking Dates: <br />";
             for (let i = 0; i < error_booking_dates.length; i++) {
                 var error_booking_date = new Date(error_booking_dates[i]).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
@@ -543,7 +529,6 @@
         var new_check_avail_element = document.querySelector("#new-check-availability-button");
 
         if (curr_check_avail_button && !new_check_avail_element && repeat_interval_select_element.value != 'undefined' && repeat_end_date_input_element.value != '') {
-            console.log("Remove Check Availability");
             curr_check_avail_button.style.display = 'none';
 
             // Create New Check Availability Button
@@ -561,7 +546,6 @@
 
             // Add the click event listener to the button
             new_check_avail_button.addEventListener("click", async function () {
-                console.log("CHECKING AVAILABILITY");
                 checked_input = validateInputs();
                 if (checked_input) {
                     valid_date_payloads = await checkAvailability(checked_input);
@@ -604,7 +588,6 @@
         var new_create_booking_element = document.querySelector("#new-create-booking-button");
 
         if (curr_create_booking_button && !new_create_booking_element && repeat_interval_select_element.value != 'undefined' && repeat_end_date_input_element.value != '') {
-            console.log("Remove Create Booking");
             curr_create_booking_button.style.display = 'none';
 
             const new_create_booking_button = document.createElement('button');
@@ -623,9 +606,6 @@
                 if (form_changed) {
                     alert('Form changed, recheck availability'); // TODO: Change to wanted button name later
                 } else {
-                    console.log('Form not changed, proceed to booking');
-                    console.log('Valid Date Payloads:', valid_date_payloads);
-
                     bookAvailableDates(valid_date_payloads);
                 }
 
