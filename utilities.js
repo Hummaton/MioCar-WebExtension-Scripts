@@ -45,9 +45,7 @@
     function criticalError(error) {
         alert('Error has occurred. Check the console for more information.');
         console.error('Critical error:', error);
-
         //TODO: Implement an API Call to AWS Lambda to log the error
-        
     }
 
     /* 'date' is the js Date object */
