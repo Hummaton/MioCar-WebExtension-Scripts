@@ -65,6 +65,17 @@
         return null;
     }
 
+    function logMetricToAWS(LOGGING_API_URL, action) {
+        fetch(LOGGING_API_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: action })
+        })
+        .then(response => response.json())
+        .then(data => console.log("Metric logged successfully:", data))
+        .catch(error => console.error("Metric logging failed:", error));
+    }
+
     // Make the retrieveAccessToken function available globally but protect against overwriting
     if (!window.getBrowserStorageValue) {
         Object.defineProperty(window, 'getBrowserStorageValue', {
@@ -100,4 +111,17 @@
     } else {
         console.warn('convertDatetimeToString is already defined and will not be overwritten.');
     }
+
+    // Make the logMetricToAWS function available globally but protect against overwriting
+    if (!window.logMetricToAWS) {
+        Object.defineProperty(window, 'logMetricToAWS', {
+            value: logMetricToAWS,
+            writable: false, // Prevent overwriting
+            configurable: false, // Prevent redefinition
+        });
+        console.log('logMetricToAWS function is now globally available.');
+    } else {
+        console.warn('logMetricToAWS is already defined and will not be overwritten.');
+    }
+    
 })();
