@@ -76,6 +76,7 @@
         return null;
     }
 
+<<<<<<< HEAD
     function logSuccessToAWS(LOGGING_API_URL, message,  time_saved, api_request_param, api_response_param) {
         // Get a time stamp of the current time 
         const timestamp = convertDatetimeToString(new Date());
@@ -90,12 +91,20 @@
                 api_request_param: api_request_param,
                 api_response_param: api_response_param
             })
+=======
+    function logMetricToAWS(LOGGING_API_URL, action) {
+        fetch(LOGGING_API_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: action })
+>>>>>>> ec9df29 (Added AWS cloudwatch logging function to utilities script and implemented AWS logging into recurring booking script)
         })
         .then(response => response.json())
         .then(data => console.log("Metric logged successfully:", data))
         .catch(error => console.error("Metric logging failed:", error));
     }
 
+<<<<<<< HEAD
     function getPostHeader(referer) {
         const apiKey = getBrowserStorageValue('oauth')?.access_token;
         const headers = {
@@ -112,6 +121,8 @@
         return headers;
     }
 
+=======
+>>>>>>> ec9df29 (Added AWS cloudwatch logging function to utilities script and implemented AWS logging into recurring booking script)
     // Make the retrieveAccessToken function available globally but protect against overwriting
     if (!window.getBrowserStorageValue) {
         Object.defineProperty(window, 'getBrowserStorageValue', {
@@ -149,6 +160,7 @@
     }
 
     // Make the logMetricToAWS function available globally but protect against overwriting
+<<<<<<< HEAD
     if (!window.logSuccessToAWS) {
         Object.defineProperty(window, 'logSuccessToAWS', {
             value: logSuccessToAWS,
@@ -170,6 +182,17 @@
         console.log('getPostHeader function is now globally available.');
     } else {
         console.warn('getPostHeader is already defined and will not be overwritten.');
+=======
+    if (!window.logMetricToAWS) {
+        Object.defineProperty(window, 'logMetricToAWS', {
+            value: logMetricToAWS,
+            writable: false, // Prevent overwriting
+            configurable: false, // Prevent redefinition
+        });
+        console.log('logMetricToAWS function is now globally available.');
+    } else {
+        console.warn('logMetricToAWS is already defined and will not be overwritten.');
+>>>>>>> ec9df29 (Added AWS cloudwatch logging function to utilities script and implemented AWS logging into recurring booking script)
     }
     
 })();
