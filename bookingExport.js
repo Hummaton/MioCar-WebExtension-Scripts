@@ -17,14 +17,45 @@
     const url = API_ENDPOINT;
     const referer = POST_HEADERS_REFERER;
 
-    async function lookAtMembers() {
+    var data_from = "2025-01-25";
+    var date_to = "2025-02-25";
+    function generateExcelSheet(data) {
+        const workbook = XLSX.utils.book_new();
+        const worksheet = XLSX.utils.aoa_to_sheet(data);
+        XLSX.utils.book_append_sheet(workbook, worksheet, data_from + " to " + date_to);
+
+        // Convert workbook to binary data
+        const wbout = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+
+        // Create a Blob and download the file
+        const blob = new Blob([wbout], { type: "application/octet-stream" });
+        const url = URL.createObjectURL(blob);
+
+        // Create a temporary download link
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "exported_data.xlsx";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+
+        // Clean up object URL
+        URL.revokeObjectURL(url);
+
+        console.log("GENERATED XLSX SHEET");
+    }
+
+    async function processMemberData() {
         // Initialize response and POST API request fields
         let requestHeaders = getPostHeader();
 
+        // Get data range
+
+
         const request_payload = {
             scheme: 93,
-            dateFrom: "2025-01-25",
-            dateTo: "2025-02-25"
+            dateFrom: data_from,
+            dateTo: date_to
         };
 
         let requestBody = JSON.stringify(request_payload);
@@ -45,9 +76,14 @@
         const data = await response.json();
         console.log(data);
 
-        var member_bookings = []; // Contains payload that will be used for Google Sheet or whatever we use
+        // Contains header for excel sheet
+        var member_bookings = [["Date", "Email", "First Name", "Last Name", "Program Location", 
+            "ExternalDataReference", "Survey Sent", "Follow Up Email", "Survey Complete", "Applied Promo Code",
+            "Requested Duration", "Actual Duration", "Miles Driven", "Vehicle Used", "Location", "Revenue",
+            "Trip Purpose", "Notes"]];  
         const items = data._embedded.items;
         for (let i=0; i<items.length; i++) {
+            // TODO: Filter out non-bookings
             // Separate member first and last name
             const member_name = items[i].memberName.split(" ");
             const member_first_name = member_name[0];
@@ -98,27 +134,17 @@
 
             const external_data_reference = `${start_month_day}-${end_month_day} from ${start_time}-${end_time}`;
 
-            
-            let payload = {
-                'member' : { /* Comments tell what the values will be used for in the google sheet report */
-                    'memberEmail' : items[i].memberEmail,
-                    'memberFirstName' : member_first_name,
-                    'memberLastName' : member_last_name
-                },
-                'trip' : {
-                    'externalDataReference' : external_data_reference,
-                    'bookingType' : items[i].type,
-                    'requestedDuration' : requested_duration,
-                    'actualDuration' : actual_duration,
-                    'milesDriven' :  items[i].tripDistance,
-                    'vehicleUsed' :  items[i].vehiclePlate,
-                    'location' :  items[i].stationName,
-                    'revenue' : items[i].totalRevenue
-                },
-                'program' : {
-                    'programLocation' : program_location,
-                }
-            }
+
+            // get current date
+            const now = new Date();
+            const curr_date = `${now.getMonth() + 1}/${now.getDate()}/${now.getFullYear()}`;
+
+
+            let payload = [curr_date, items[i].memberEmail, member_first_name, member_last_name, program_location, 
+                external_data_reference, "", "", "", "", requested_duration.toFixed(2), actual_duration.toFixed(2), 
+                items[i].tripDistance, items[i].vehiclePlate, items[i].stationName, items[i].totalRevenue, "", ""
+            ];
+
             /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
              * TODO: Still need gather info on Date!, Survey Sent, Survey Completed, Applied Promo Code,     *
              * Requested Duration!, Actual Duration!, and Trip Purpose to add to payload.                    *
@@ -162,8 +188,9 @@
 
             // Add functionality when button is clicked
             reportExportButton.addEventListener('click', async function() {
-                const member_bookings = await lookAtMembers();
+                const member_bookings = await processMemberData();
                 console.log("Member Booking of Interest:", member_bookings[7]);
+                generateExcelSheet(member_bookings);
             });
         }
     }
