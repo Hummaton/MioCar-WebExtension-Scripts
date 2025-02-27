@@ -502,10 +502,36 @@
         removeMessages();
         var only_valid_dates_msg = "Booked the following dates:<br />";
         for (let i = 0; i < valid_date_payloads.length; i++) {
+            // Info that will be provided to the log
             var valid_date = new Date(valid_date_payloads[i].pickUpDatetime).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+            var dropoff_date = new Date(valid_date_payloads[i].dropOffDatetime).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+            var valid_vehicle = valid_date_payloads[i].vehicle;
+            var valid_purpose = valid_date_payloads[i].purpose;
+
             only_valid_dates_msg = only_valid_dates_msg + valid_date + "<br />";
-            logMetricToAWS(cloudwatch_url, 'Successful booking made for date: ' + valid_date);
+
+            // Create timestamp
+            const now = new Date();
+            const timestamp = now.toLocaleString("en-US", { 
+                year: "numeric", 
+                month: "long", 
+                day: "numeric", 
+                hour: "2-digit", 
+                minute: "2-digit", 
+                second: "2-digit",
+                hour12: true 
+            });
+
+            // Log Message
+            var logMessage = `Time when logged: ${timestamp}
+            Pickup Date: ${valid_date} 
+            Dropoff Date: ${dropoff_date}
+            Vehicle: ${valid_vehicle} 
+            Purpose: ${valid_purpose}`;
+
+            logMetricToAWS(cloudwatch_url, logMessage);
         }
+
         createGreenMessage(only_valid_dates_msg);
 
         if (error_booking_dates.length > 0) {
@@ -519,7 +545,6 @@
 
         let new_create_booking_button = document.querySelector("#new-create-booking-button");
         new_create_booking_button.disabled = true;
-
     }
 
 

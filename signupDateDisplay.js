@@ -14,7 +14,6 @@
 (function() {
     'use strict';
 
-
     // Function to add the date selection buttons
     function addColumn() {
         // Select the target element where buttons will be added
