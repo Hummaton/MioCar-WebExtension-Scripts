@@ -523,11 +523,16 @@
             });
 
             // Log Message
-            var logMessage = `Time when logged: ${timestamp}
-            Pickup Date: ${valid_date} 
-            Dropoff Date: ${dropoff_date}
-            Vehicle: ${valid_vehicle} 
-            Purpose: ${valid_purpose}`;
+            var logMessage = JSON.stringify({
+                timestamp: timestamp,
+                message: "Success: Service Booking made",
+                details: {
+                    pickupDate: valid_date,
+                    dropoffDate: dropoff_date,
+                    vehicle: valid_vehicle,
+                    purpose: valid_purpose
+                }
+            });
 
             logMetricToAWS(cloudwatch_url, logMessage);
         }
