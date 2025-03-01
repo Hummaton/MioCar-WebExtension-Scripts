@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         Booking Report Export 
+// @name         Booking Report Export
 // @namespace    http://tampermonkey.net/
 // @version      2025-01-25
 // @description  Adds a button to export booking reports as CSV
@@ -8,21 +8,26 @@
 // @grant        none
 // @updateURL    https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/refs/heads/main/bookingExport.js
 // @downloadURL  https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/refs/heads/main/bookingExport.js
+// @require      https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/serviceBooking_dev/utilities.js
+// @require      https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js
 // @grant        none
 // ==/UserScript==
 
 (function() {
     'use strict';
 
-    const url = API_ENDPOINT;
-    const referer = POST_HEADERS_REFERER;
+    async function generateExcelSheet(data) {
+        let date_from_element = document.querySelector("body > sc-app-root > sc-app-root > div:nth-child(2) > section > div > div > div:nth-child(1) > main > ng-component > div > section > header > div > div.col-md-8 > p > strong:nth-child(2) > sc-date-display:nth-child(1) > span");
+        const date_from = date_from_element.innerHTML;
 
-    var data_from = "2025-01-25";
-    var date_to = "2025-02-25";
-    function generateExcelSheet(data) {
+        let date_to_element = document.querySelector("body > sc-app-root > sc-app-root > div:nth-child(2) > section > div > div > div:nth-child(1) > main > ng-component > div > section > header > div > div.col-md-8 > p > strong:nth-child(2) > sc-date-display:nth-child(2) > span");
+        const date_to = date_to_element.innerHTML;
+
+        console.log("DATA: ", date_from, date_to);
+
         const workbook = XLSX.utils.book_new();
         const worksheet = XLSX.utils.aoa_to_sheet(data);
-        XLSX.utils.book_append_sheet(workbook, worksheet, data_from + " to " + date_to);
+        XLSX.utils.book_append_sheet(workbook, worksheet, date_from + " to " + date_to);
 
         // Convert workbook to binary data
         const wbout = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
@@ -43,47 +48,19 @@
         URL.revokeObjectURL(url);
 
         console.log("GENERATED XLSX SHEET");
+
     }
 
-    async function processMemberData() {
-        // Initialize response and POST API request fields
-        let requestHeaders = getPostHeader();
-
-        // Get data range
-
-
-        const request_payload = {
-            scheme: 93,
-            dateFrom: data_from,
-            dateTo: date_to
-        };
-
-        let requestBody = JSON.stringify(request_payload);
-
-        // Send POST to server
-        var response;
-        try {
-            response = await fetch(url, {
-                method: 'POST',
-                headers: requestHeaders,
-                body: requestBody
-            });
-        } catch (error) {
-            console.error('Error making POST request:', error);
-        }
-
-        // Await the response text and log it
-        const data = await response.json();
-        console.log(data);
+    async function processMemberData(data_arr) {
+        console.log(data_arr);
 
         // Contains header for excel sheet
-        var member_bookings = [["Date", "Email", "First Name", "Last Name", "Program Location", 
+        var member_bookings = [["Date", "Email", "First Name", "Last Name", "Program Location",
             "ExternalDataReference", "Survey Sent", "Follow Up Email", "Survey Complete", "Applied Promo Code",
             "Requested Duration", "Actual Duration", "Miles Driven", "Vehicle Used", "Location", "Revenue",
-            "Trip Purpose", "Notes"]];  
-        const items = data._embedded.items;
+            "Trip Purpose", "Notes"]];
+        const items = data_arr._embedded.items;
         for (let i=0; i<items.length; i++) {
-            // TODO: Filter out non-bookings
             // Separate member first and last name
             const member_name = items[i].memberName.split(" ");
             const member_first_name = member_name[0];
@@ -136,12 +113,12 @@
 
 
             // get current date
-            const now = new Date();
-            const curr_date = `${now.getMonth() + 1}/${now.getDate()}/${now.getFullYear()}`;
+            var today = new Date();
+            var lastDayOfMonth = new Date(today.getFullYear(), today.getMonth()+1, 0);
 
 
-            let payload = [curr_date, items[i].memberEmail, member_first_name, member_last_name, program_location, 
-                external_data_reference, "", "", "", "", requested_duration.toFixed(2), actual_duration.toFixed(2), 
+            let payload = [lastDayOfMonth, items[i].memberEmail, member_first_name, member_last_name, program_location,
+                external_data_reference, "", "", "", "", requested_duration.toFixed(2), actual_duration.toFixed(2),
                 items[i].tripDistance, items[i].vehiclePlate, items[i].stationName, items[i].totalRevenue, "", ""
             ];
 
@@ -157,10 +134,11 @@
 
             member_bookings.push(payload);
         }
-        
+
         return member_bookings;
     }
 
+    var data_response_arr;
     // Function to add the CSV export button
     function addButton() {
         // Select the target element where the button will be added
@@ -188,9 +166,12 @@
 
             // Add functionality when button is clicked
             reportExportButton.addEventListener('click', async function() {
-                const member_bookings = await processMemberData();
+                const start = performance.now();
+                const member_bookings = await processMemberData(data_response_arr);
                 console.log("Member Booking of Interest:", member_bookings[7]);
-                generateExcelSheet(member_bookings);
+                await generateExcelSheet(member_bookings);
+                const end = performance.now();
+                console.log(`Report Export took ${(end - start) / 1000} seconds`);
             });
         }
     }
@@ -209,5 +190,34 @@
         childList: true,
         subtree: true
     });
+
+    // Intercept member data through Hook XMLHttpRequest
+    const open = window.XMLHttpRequest.prototype.open;
+    window.XMLHttpRequest.prototype.open = function(method, url_arg, ...rest) {
+        if (!document.querySelector("body > sc-app-root > sc-app-root > div:nth-child(2) > section > div > div > div:nth-child(1) > main > ng-component > div > section > header > div > div.col-md-4.icon-links > button:nth-child(2)")) {
+            observer.observe(document, {
+                childList: true,
+                subtree: true
+            });
+        }
+
+        if (url_arg.includes(url)) {
+            this.addEventListener("load", function() {
+                console.log("[Tampermonkey] Intercepted XHR request:", {
+                    method: method,
+                    url: url_arg,
+                    status: this.status,
+                    response: JSON.parse(this.responseText)
+                });
+
+                data_response_arr = (JSON.parse(this.responseText));
+                console.log("DATA RESPONSE ARRAY: ", data_response_arr);
+            });
+        }
+        return open.apply(this, [method, url_arg, ...rest]);
+    };
+
+    console.log("🚨 Fetch Interceptor is Running...");
+
 
 })();
