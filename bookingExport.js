@@ -100,6 +100,7 @@
             const reportExportButton = document.createElement('button');
             reportExportButton.type = 'button';
             reportExportButton.className = 'p-element btn btn-link';
+            reportExportButton.id = 'report-export-button';
             reportExportButton.setAttribute('ptooltip', 'Generate a formatted CSV report of the data');
 
             const icon = document.createElement('i');
@@ -143,7 +144,7 @@
     // Intercept API call to get booking data
     const open = window.XMLHttpRequest.prototype.open;
     window.XMLHttpRequest.prototype.open = function(method, url_arg, ...rest) {
-        if (!document.querySelector("body > sc-app-root > sc-app-root > div:nth-child(2) > section > div > div > div:nth-child(1) > main > ng-component > div > section > header > div > div.col-md-4.icon-links > button:nth-child(2)")) {
+        if (!document.querySelector("#report-export-button")) {
             observer.observe(document, {
                 childList: true,
                 subtree: true
