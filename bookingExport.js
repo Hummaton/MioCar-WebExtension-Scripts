@@ -16,6 +16,7 @@
 
     /************* FILL IN FOR PRODUCTION SCRIPT  */
     const TARGET_URL = ""; // Target API endpoint
+    const LOGGING_API_URL = ""; // Logging API endpoint
     /************* FILL IN FOR PRODUCTION SCRIPT  */
 
     // Utility functions
@@ -111,14 +112,20 @@
             rowDiv.insertBefore(reportExportButton, rowDiv.children[1]);
 
             reportExportButton.addEventListener('click', async function() {
-                const start = performance.now();
-                const member_bookings = await processMemberData(data_response_arr);
-                await generateExcelSheet(member_bookings);
-                const end = performance.now();
-                console.log(`Report Export took ${(end - start) / 1000} seconds`);
-                console.log("Member Bookings processed: ", data_response_arr._embedded.items.length);
-                const time_saved = 160 * member_bookings.length;
-                console.log("Time saved: ", time_saved);
+                try {
+                    const start = performance.now();
+                    const member_bookings = await processMemberData(data_response_arr);
+                    await generateExcelSheet(member_bookings);
+                    const end = performance.now();
+                    console.log(`Report Export took ${(end - start) / 1000} seconds`);
+                    console.log("Member Bookings processed: ", data_response_arr._embedded.items.length);
+                    const time_saved = 160 * member_bookings.length;
+                    console.log("Time saved: ", time_saved);
+                    logSuccessToAWS(LOGGING_API_URL, "Report Exported", time_saved, "Intercepted report payload. No request made", "Intercepted report payload. No response received");
+                } catch (error) {
+                    console.error("Error generating report: ", error);
+                    logErrorToAWS(LOGGING_API_URL, `Error generating report:" ${error.message}`, "Intercepted report payload. No request made", "Intercepted report payload. No response received");
+                }
             });
         }
     }
@@ -153,7 +160,12 @@
 
         if (url_arg.includes(TARGET_URL)) {
             this.addEventListener("load", function() {
-                data_response_arr = JSON.parse(this.responseText);
+                try {
+                    data_response_arr = JSON.parse(this.responseText);
+                } catch (error) {
+                    console.error("Error parsing response data: ", error);
+                    logErrorToAWS(LOGGING_API_URL, "Error parsing response data", error.message);
+                }
             });
         }
         return open.apply(this, [method, url_arg, ...rest]);

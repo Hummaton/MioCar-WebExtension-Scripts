@@ -6,7 +6,7 @@
 // @author       You
 // @match        https://admin.share.car/communities/*/fleet/vehicles/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=share.car
-// @require      https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/serviceBooking_dev/utilities.js
+// @require      https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/report_dev/utilities.js     //CHANGE TO MAIN BRANCH AFTER MERGING 
 // @grant        none
 // ==/UserScript==
 
@@ -49,22 +49,6 @@
     const url = API_ENDPOINT;
     const referer = POST_HEADERS_REFERER;
     /************* FILL IN FOR PRODUCTION SCRIPT  */
-
-    function getPostHeader() {
-        const apiKey = getBrowserStorageValue('oauth')?.access_token;
-        const headers = {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${apiKey}`,
-            'Referer': referer,
-            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
-            'sec-ch-ua': '"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
-            'sec-ch-ua-mobile': '?0',
-            'sec-ch-ua-platform': '"macOS"'
-        };
-
-        return headers;
-    }
 
     function repeatIntervalToInt(repeat_interval) {
         // ['Daily', 'Weekly', 'Bi-Weekly', 'Monthly', 'Yearly']
@@ -328,8 +312,8 @@
         var valid_date_payloads = [];
         var curr_pickup_datetime_obj = pickup_datetime_obj;
         var curr_dropoff_datetime_obj = dropoff_datetime_obj;
-        let requestHeaders = getPostHeader();
-
+        let requestHeaders = getPostHeader(referer);
+        
         createProgressBar();
 
         const total_intervals = Math.ceil((repeat_end_datetime_obj - pickup_datetime_obj) / (repeat_interval_int * 24 * 60 * 60 * 1000));
@@ -455,7 +439,7 @@
 
         // Initialize response and POST API request fields
         var response;
-        let requestHeaders = getPostHeader();
+        let requestHeaders = getPostHeader(referer);
 
         createProgressBar();
 

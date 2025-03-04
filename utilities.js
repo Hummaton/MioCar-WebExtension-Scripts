@@ -96,6 +96,22 @@
         .catch(error => console.error("Metric logging failed:", error));
     }
 
+    function getPostHeader(referer) {
+        const apiKey = getBrowserStorageValue('oauth')?.access_token;
+        const headers = {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`,
+            'Referer': referer,
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+            'sec-ch-ua': '"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
+            'sec-ch-ua-mobile': '?0',
+            'sec-ch-ua-platform': '"macOS"'
+        };
+
+        return headers;
+    }
+
     // Make the retrieveAccessToken function available globally but protect against overwriting
     if (!window.getBrowserStorageValue) {
         Object.defineProperty(window, 'getBrowserStorageValue', {
@@ -142,6 +158,18 @@
         console.log('logSuccessToAWS function is now globally available.');
     } else {
         console.warn('logSuccessToAWS is already defined and will not be overwritten.');
+    }
+
+    // Make the getPostHeader function available globally but protect against overwriting
+    if (!window.getPostHeader) {
+        Object.defineProperty(window, 'getPostHeader', {
+            value: getPostHeader,
+            writable: false, // Prevent overwriting
+            configurable: false, // Prevent redefinition
+        });
+        console.log('getPostHeader function is now globally available.');
+    } else {
+        console.warn('getPostHeader is already defined and will not be overwritten.');
     }
     
 })();
