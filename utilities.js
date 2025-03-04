@@ -2,10 +2,8 @@
 // @name         Utilities
 // @namespace    http://tampermonkey.net/
 // @version      2025-01-25
-// @description  Make a POST request with dynamic API key
+// @description  None
 // @author       Your Name
-// @updateURL    https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/refs/heads/main/utilities.js
-// @downloadURL  https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/refs/heads/main/utilities.js
 // @match        https://admin.share.car*
 // @grant        none
 // ==/UserScript==
@@ -42,10 +40,23 @@
         return null; // Return null if no value is found
     }
 
-    function criticalError(error) {
-        alert('Error has occurred. Check the console for more information.');
-        console.error('Critical error:', error);
-        //TODO: Implement an API Call to AWS Lambda to log the error
+    function logErrorToAWS(LOGGING_API_URL, message, api_request_param, api_response_param) {
+        // Get a time stamp of the current time 
+        const timestamp = convertDatetimeToString(new Date());
+        fetch(LOGGING_API_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ 
+                timestamp: timestamp,
+                level: "ERROR",
+                message: message,
+                api_request_param: api_request_param,
+                api_response_param: api_response_param
+            })
+        })
+        .then(response => response.json())
+        .then(data => console.log("Error Metric logged successfully:", data))
+        .catch(error => console.error("Error Metric logging failed:", error));
     }
 
     /* 'date' is the js Date object */
@@ -65,11 +76,20 @@
         return null;
     }
 
-    function logMetricToAWS(LOGGING_API_URL, action) {
+    function logSuccessToAWS(LOGGING_API_URL, message,  time_saved, api_request_param, api_response_param) {
+        // Get a time stamp of the current time 
+        const timestamp = convertDatetimeToString(new Date());
         fetch(LOGGING_API_URL, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ action: action })
+            body: JSON.stringify({ 
+                timestamp: timestamp,
+                level: "Success",
+                message: message,
+                time_saved: time_saved,
+                api_request_param: api_request_param,
+                api_response_param: api_response_param
+            })
         })
         .then(response => response.json())
         .then(data => console.log("Metric logged successfully:", data))
@@ -89,15 +109,15 @@
     }
 
     // Make the criticalError function available globally but protect against overwriting
-    if (!window.criticalError) {
-        Object.defineProperty(window, 'criticalError', {
-            value: criticalError,
+    if (!window.logErrorToAWS) {
+        Object.defineProperty(window, 'logErrorToAWS', {
+            value: logErrorToAWS,
             writable: false, // Prevent overwriting
             configurable: false, // Prevent redefinition
         });
-        console.log('criticalError function is now globally available.');
+        console.log('logErrorToAWS function is now globally available.');
     } else {
-        console.warn('criticalError is already defined and will not be overwritten.');
+        console.warn('logErrorToAWS is already defined and will not be overwritten.');
     }
 
     // Make the convertDatetimeToString function available globally but protect against overwriting
@@ -113,15 +133,15 @@
     }
 
     // Make the logMetricToAWS function available globally but protect against overwriting
-    if (!window.logMetricToAWS) {
-        Object.defineProperty(window, 'logMetricToAWS', {
-            value: logMetricToAWS,
+    if (!window.logSuccessToAWS) {
+        Object.defineProperty(window, 'logSuccessToAWS', {
+            value: logSuccessToAWS,
             writable: false, // Prevent overwriting
             configurable: false, // Prevent redefinition
         });
-        console.log('logMetricToAWS function is now globally available.');
+        console.log('logSuccessToAWS function is now globally available.');
     } else {
-        console.warn('logMetricToAWS is already defined and will not be overwritten.');
+        console.warn('logSuccessToAWS is already defined and will not be overwritten.');
     }
     
 })();
