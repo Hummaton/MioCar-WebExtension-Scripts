@@ -9,7 +9,7 @@ def lambda_handler(event, context):
         body = json.loads(event.get("body", "{}"))
 
         # Extract required parameters
-        status = body.get("status", "UNKNOWN").upper()
+        level = body.get("level", "UNKNOWN")
         message = body.get("message", "No message provided")
         feature = body.get("feature", "unknown_feature")
         
@@ -55,7 +55,7 @@ def lambda_handler(event, context):
         # Build structured log response
         log_entry = {
             "timestamp": context.aws_request_id if context else "N/A",
-            "level": status,
+            "level": level,
             "feature": feature,
             "message": message,
             "details": details if details else None  # Only include details if available

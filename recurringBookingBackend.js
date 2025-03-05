@@ -202,7 +202,7 @@
         //API Call to AWS Cloudwatch to log the error 
         logMetricToAWS({
             LOGGING_API_URL: cloudwatch_url,
-            status: "ERROR",
+            level: "ERROR",
             message: error_string,
             feature: "Recurring Booking",
             api_request_param: body,
@@ -363,7 +363,7 @@
                 console.error('Error making POST request:', error);
                 logMetricToAWS({
                     LOGGING_API_URL: cloudwatch_url,
-                    status: "ERROR",
+                    level: "ERROR",
                     message: `Error checking availability for service booking: ${error.message}`,
                     feature: "Recurring Booking",
                     api_request_param: requestBody,
@@ -484,7 +484,7 @@
                 console.error('Error: Bad Booking POST request:', error);
                 logMetricToAWS({
                     LOGGING_API_URL: cloudwatch_url,
-                    status: "ERROR",
+                    level: "ERROR",
                     message: `Error: Bad Booking POST request: ${error.message}`,
                     feature: "Recurring Booking",
                     api_request_param: requestBody
@@ -518,7 +518,7 @@
             // Safe to say that the booking on its own takes 50 seconds to create
             logMetricToAWS({
                 LOGGING_API_URL: cloudwatch_url,
-                status: "SUCCESS",
+                level: "SUCCESS",
                 message: "Service Booking created",
                 time_saved: 50,
                 feature: "Recurring Booking",
