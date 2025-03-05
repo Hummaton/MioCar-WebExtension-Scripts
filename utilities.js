@@ -2,10 +2,8 @@
 // @name         Utilities
 // @namespace    http://tampermonkey.net/
 // @version      2025-01-25
-// @description  Make a POST request with dynamic API key
+// @description  None
 // @author       Your Name
-// @updateURL    https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/refs/heads/main/utilities.js
-// @downloadURL  https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/refs/heads/main/utilities.js
 // @match        https://admin.share.car*
 // @grant        none
 // ==/UserScript==
@@ -26,6 +24,22 @@
        const activeCommunityId = getBrowserStorageValue('activeCommunityId');
     */
 
+    function getPostHeader(referer) {
+        const apiKey = getBrowserStorageValue('oauth')?.access_token;
+        const headers = {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`,
+            'Referer': referer,
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+            'sec-ch-ua': '"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
+            'sec-ch-ua-mobile': '?0',
+            'sec-ch-ua-platform': '"macOS"'
+        };
+
+        return headers;
+    }
+
     function getBrowserStorageValue(key) {
         try {
             const value = localStorage.getItem(key);
@@ -40,12 +54,6 @@
         }
 
         return null; // Return null if no value is found
-    }
-
-    function criticalError(error) {
-        alert('Error has occurred. Check the console for more information.');
-        console.error('Critical error:', error);
-        //TODO: Implement an API Call to AWS Lambda to log the error
     }
 
     /* 'date' is the js Date object */
@@ -65,17 +73,54 @@
         return null;
     }
 
-    function logMetricToAWS(LOGGING_API_URL, action) {
-        fetch(LOGGING_API_URL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ action: action })
-        })
-        .then(response => response.json())
-        .then(data => console.log("Metric logged successfully:", data))
-        .catch(error => console.error("Metric logging failed:", error));
-    }
+    /* Example usage:
+    logSuccessToAWS({
+        LOGGING_API_URL: URL,
+        status: "SUCCESS",
+        message: "Successful booking",
+        api_request_param: validbooking[2]
+    });  
+           ^ You don’t need to specify null for missing values */
+           function logMetricToAWS({ LOGGING_API_URL, level, message, feature, time_saved = null, api_request_param = null, api_response_param = null, additional = {} }) {
+            const timestamp = new Date().toISOString();
+        
+            // Merge all fields into additional 
+            additional = { 
+                ...(time_saved !== null && { time_saved }), 
+                ...(api_request_param !== null && { apiRequest: api_request_param }), 
+                ...(api_response_param !== null && { apiResponse: api_response_param }),
+                ...additional // Ensure custom fields are included
+            };
+        
+            // Prepare payload
+            const payload = {
+                timestamp,
+                level,  // Ensure level is included
+                feature,
+                message,
+                ...(Object.keys(additional).length > 0 && { details: additional }) // Additional parameters if present
+            };
 
+            // Send log to AWS
+            fetch(LOGGING_API_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(errData => {
+                        throw new Error(`HTTP ${response.status}: ${JSON.stringify(errData)}`);
+                    });
+                }
+                return response.json();
+            })
+            .then(data => console.log("Metric logged successfully:", data))
+            .catch(error => {
+                console.error("Metric logging failed:", error);
+            });
+        }
+        
     // Make the retrieveAccessToken function available globally but protect against overwriting
     if (!window.getBrowserStorageValue) {
         Object.defineProperty(window, 'getBrowserStorageValue', {
@@ -86,18 +131,6 @@
         console.log('getBrowserStorageValue function is now globally available.');
     } else {
         console.warn('getBrowserStorageValue is already defined and will not be overwritten.');
-    }
-
-    // Make the criticalError function available globally but protect against overwriting
-    if (!window.criticalError) {
-        Object.defineProperty(window, 'criticalError', {
-            value: criticalError,
-            writable: false, // Prevent overwriting
-            configurable: false, // Prevent redefinition
-        });
-        console.log('criticalError function is now globally available.');
-    } else {
-        console.warn('criticalError is already defined and will not be overwritten.');
     }
 
     // Make the convertDatetimeToString function available globally but protect against overwriting
@@ -122,6 +155,18 @@
         console.log('logMetricToAWS function is now globally available.');
     } else {
         console.warn('logMetricToAWS is already defined and will not be overwritten.');
+    }
+
+    // Make the getPostHeader function available globally but protect against overwriting
+    if (!window.getPostHeader) {
+        Object.defineProperty(window, 'getPostHeader', {
+            value: getPostHeader,
+            writable: false, // Prevent overwriting
+            configurable: false, // Prevent redefinition
+        });
+        console.log('getPostHeader function is now globally available.');
+    } else {
+        console.warn('getPostHeader is already defined and will not be overwritten.');
     }
     
 })();
