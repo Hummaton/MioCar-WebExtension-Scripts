@@ -40,25 +40,6 @@
         return null; // Return null if no value is found
     }
 
-    function logErrorToAWS(LOGGING_API_URL, message, api_request_param, api_response_param) {
-        // Get a time stamp of the current time 
-        const timestamp = convertDatetimeToString(new Date());
-        fetch(LOGGING_API_URL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ 
-                timestamp: timestamp,
-                level: "ERROR",
-                message: message,
-                api_request_param: api_request_param,
-                api_response_param: api_response_param
-            })
-        })
-        .then(response => response.json())
-        .then(data => console.log("Error Metric logged successfully:", data))
-        .catch(error => console.error("Error Metric logging failed:", error));
-    }
-
     /* 'date' is the js Date object */
     function convertDatetimeToString(date) {
         if (date instanceof Date) {
@@ -76,42 +57,57 @@
         return null;
     }
 
-    function logSuccessToAWS(LOGGING_API_URL, message,  time_saved, api_request_param, api_response_param) {
-        // Get a time stamp of the current time 
-        const timestamp = convertDatetimeToString(new Date());
-        fetch(LOGGING_API_URL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ 
-                timestamp: timestamp,
-                level: "Success",
-                message: message,
-                time_saved: time_saved,
-                api_request_param: api_request_param,
-                api_response_param: api_response_param
+    /* Example usage:
+    logSuccessToAWS({
+        LOGGING_API_URL: URL,
+        status: "SUCCESS",
+        message: "Successful booking",
+        api_request_param: validbooking[2]
+    });  
+           ^ You don’t need to specify null for missing values */
+           function logMetricToAWS({ LOGGING_API_URL, level, message, feature, time_saved = null, api_request_param = null, api_response_param = null, additional = {} }) {
+            const timestamp = new Date().toISOString();
+            level = level.toUpperCase(); // Normalize level to uppercase
+        
+            // Merge all fields into additional 
+            additional = { 
+                ...(time_saved !== null && { time_saved }), 
+                ...(api_request_param !== null && { apiRequest: api_request_param }), 
+                ...(api_response_param !== null && { apiResponse: api_response_param }),
+                ...additional // Ensure custom fields are included
+            };
+        
+            // Prepare payload
+            const payload = {
+                timestamp,
+                level, // Use normalized status
+                feature,
+                message,
+                ...(Object.keys(additional).length > 0 && { details: additional }) // Additonal parameters if present
+            };
+        
+            // Send log to AWS
+            fetch(LOGGING_API_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
             })
-        })
-        .then(response => response.json())
-        .then(data => console.log("Metric logged successfully:", data))
-        .catch(error => console.error("Metric logging failed:", error));
-    }
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(errData => {
+                        throw new Error(`HTTP ${response.status}: ${JSON.stringify(errData)}`);
+                    });
+                }
+                return response.json();
+            })
+            .then(data => console.log("Metric logged successfully:", data))
+            .catch(error => {
+                console.error("Metric logging failed:", error);
+            });
+        }
+        
 
-    function getPostHeader(referer) {
-        const apiKey = getBrowserStorageValue('oauth')?.access_token;
-        const headers = {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${apiKey}`,
-            'Referer': referer,
-            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
-            'sec-ch-ua': '"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
-            'sec-ch-ua-mobile': '?0',
-            'sec-ch-ua-platform': '"macOS"'
-        };
-
-        return headers;
-    }
-
+    
     // Make the retrieveAccessToken function available globally but protect against overwriting
     if (!window.getBrowserStorageValue) {
         Object.defineProperty(window, 'getBrowserStorageValue', {
@@ -122,18 +118,6 @@
         console.log('getBrowserStorageValue function is now globally available.');
     } else {
         console.warn('getBrowserStorageValue is already defined and will not be overwritten.');
-    }
-
-    // Make the criticalError function available globally but protect against overwriting
-    if (!window.logErrorToAWS) {
-        Object.defineProperty(window, 'logErrorToAWS', {
-            value: logErrorToAWS,
-            writable: false, // Prevent overwriting
-            configurable: false, // Prevent redefinition
-        });
-        console.log('logErrorToAWS function is now globally available.');
-    } else {
-        console.warn('logErrorToAWS is already defined and will not be overwritten.');
     }
 
     // Make the convertDatetimeToString function available globally but protect against overwriting
@@ -149,15 +133,15 @@
     }
 
     // Make the logMetricToAWS function available globally but protect against overwriting
-    if (!window.logSuccessToAWS) {
-        Object.defineProperty(window, 'logSuccessToAWS', {
-            value: logSuccessToAWS,
+    if (!window.logMetricToAWS) {
+        Object.defineProperty(window, 'logMetricToAWS', {
+            value: logMetricToAWS,
             writable: false, // Prevent overwriting
             configurable: false, // Prevent redefinition
         });
-        console.log('logSuccessToAWS function is now globally available.');
+        console.log('logMetricToAWS function is now globally available.');
     } else {
-        console.warn('logSuccessToAWS is already defined and will not be overwritten.');
+        console.warn('logMetricToAWS is already defined and will not be overwritten.');
     }
 
     // Make the getPostHeader function available globally but protect against overwriting

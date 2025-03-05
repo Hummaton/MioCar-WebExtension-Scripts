@@ -6,7 +6,7 @@
 // @author       You
 // @match        https://admin.share.car/communities/*/fleet/vehicles/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=share.car
-// @require      https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/report_dev/utilities.js     //CHANGE TO MAIN BRANCH AFTER MERGING 
+// @require      https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/report_dev/utilities.js
 // @grant        none
 // ==/UserScript==
 
@@ -48,6 +48,7 @@
     /************* FILL IN FOR PRODUCTION SCRIPT  */
     const url = API_ENDPOINT;
     const referer = POST_HEADERS_REFERER;
+    const cloudwatch_url = CLOUDWATCH_ENDPOINT;
     /************* FILL IN FOR PRODUCTION SCRIPT  */
 
     function repeatIntervalToInt(repeat_interval) {
@@ -144,53 +145,69 @@
 
     }
 
-    function processBadResponse(response, bad_dates, headers, body, curr_pickup_datetime) {
+    function processBadResponse(response, bad_dates, body, curr_pickup_datetime) {
         let error_string = "";
         switch(response.status) {
             case BAD_REQUEST:
-                error_string = "Bad Request for recurring booking script\n API Call Headers: " + headers + "\nAPI Call Body: " + body + "\nResponse: " + response;
+                error_string = "Bad Request for recurring booking script";
                 break;
             case (INVALID_TOKEN || FORBIDDEN):
-                error_string = "Invalid Token or Forbidden Access for recurring booking script\n API Call Headers: " + headers + "\nAPI Call Body: " + body + "\nResponse: " + response;
+                error_string = "Invalid Token or Forbidden Access for recurring booking script";
                 /* Since we plan to retrieve the token from the browser's localStorage right before making the API call,
                 we can assume that we are getting the most up to date key. If the key is invalid, the user should refresh the page" */
                 alert('Invalid API token, please refresh the page'); //TODO: Integrate this into the red error box div to display nicely
                 return;
             case NOT_FOUND:
-                error_string = "API endpoint not found for recurring booking script\n API Call Headers: " + headers + "\nAPI Call Body: " + body + "\nResponse: " + response;
+                error_string = "API endpoint not found";
                 break;
             case UNPROCESSABLE_CONTENT:
                 bad_dates.push(curr_pickup_datetime);
                 return;
             case TOO_MANY_REQUESTS:
                 DELAY_AMMOUNT = DELAY_AMMOUNT * 1.8; // Increase delay by 80%
-                error_string = "Too many requests for recurring booking script\n API Call Headers: " + headers + "\nAPI Call Body: " + body + "\nResponse: " + response;
+                error_string = "Too many requests for recurring booking script to ShareCar API";
                 error_string += "\nDelay increased to: " + DELAY_AMMOUNT;
 
                 if (DELAY_AMMOUNT > 3000) {
-                    console.log('Delay is too long, stopping requests');
                     alert('API issue detected, please try again later. Developers have been notified');
                     error_string += "\nDelay is too long, stopping requests";
-                    criticalError(error_string);
+
+                    logMetricToAWS({
+                        LOGGING_API_URL: cloudwatch_url,
+                        level: "ERROR",
+                        message: `Delay too long for recurring booking script\n Delay: ${DELAY_AMMOUNT}`,
+                        feature: "Recurring Booking",
+                        api_request_param: body,
+                        api_response_param: response,
+                    })
                     return;
                 }
                 break;
             case INTERNAL_SERVER_ERROR:
                 alert('Internal Server Error for ShareCar servers, please try again later');
+                error_string += "Internal Server Error for recurring booking script"
                 break;
             case SERVICE_UNAVAILABLE:
                 alert('ShareCar servers unavailable, please try again later');
+                error_string += "Service Unavailable for recurring booking script"
                 break;
             default:
                 console.log('An unexpected error occurred: ', response.status);
                 console.log('Response:', response);
-                alert('An unexpected error occurred, please try again later');
-                error_string = "Unexpected error for recurring booking script\n API Call Headers: " + headers + "\nAPI Call Body: " + body + "\nResponse: " + response;
+                alert('An unexpected error occurred, please check the console for more information and try again later');
+                error_string = "Unexpected error for recurring booking script";
                 break;
         }
 
-        //API Call to Google sheet to log the error (future development)
-        criticalError(error_string);
+        //API Call to AWS Cloudwatch to log the error 
+        logMetricToAWS({
+            LOGGING_API_URL: cloudwatch_url,
+            status: "ERROR",
+            message: error_string,
+            feature: "Recurring Booking",
+            api_request_param: body,
+            api_response_param: response
+        });
     }
 
     function createRedMessage(str) {
@@ -312,8 +329,8 @@
         var valid_date_payloads = [];
         var curr_pickup_datetime_obj = pickup_datetime_obj;
         var curr_dropoff_datetime_obj = dropoff_datetime_obj;
-        let requestHeaders = getPostHeader(referer);
-        
+        let requestHeaders = getPostHeader();
+
         createProgressBar();
 
         const total_intervals = Math.ceil((repeat_end_datetime_obj - pickup_datetime_obj) / (repeat_interval_int * 24 * 60 * 60 * 1000));
@@ -344,11 +361,18 @@
                 });
             } catch (error) {
                 console.error('Error making POST request:', error);
+                logMetricToAWS({
+                    LOGGING_API_URL: cloudwatch_url,
+                    status: "ERROR",
+                    message: `Error checking availability for service booking: ${error.message}`,
+                    feature: "Recurring Booking",
+                    api_request_param: requestBody,
+                });
             }
 
             // Handle POST responses
             if (!(response.status == CREATED)) {
-                processBadResponse(response, invalid_dates, requestHeaders, requestBody, convertDatetimeToString(curr_pickup_datetime_obj));
+                processBadResponse(response, invalid_dates, requestBody, convertDatetimeToString(curr_pickup_datetime_obj));
             } else {
                 // Create payloads for valid dates to use for booking
                 const valid_date_payload = {
@@ -439,7 +463,7 @@
 
         // Initialize response and POST API request fields
         var response;
-        let requestHeaders = getPostHeader(referer);
+        let requestHeaders = getPostHeader();
 
         createProgressBar();
 
@@ -456,17 +480,22 @@
                     headers: requestHeaders,
                     body: requestBody
                 });
-                //Log the booking using AWS Cloudwatch (future development)
             } catch (error) {
-                console.error('Error making POST request:', error);
-                // Log the error using AWS Cloudwatch (future development)
+                console.error('Error: Bad Booking POST request:', error);
+                logMetricToAWS({
+                    LOGGING_API_URL: cloudwatch_url,
+                    status: "ERROR",
+                    message: `Error: Bad Booking POST request: ${error.message}`,
+                    feature: "Recurring Booking",
+                    api_request_param: requestBody
+                });
             }
 
             // Handle POST responses
             if (!(response.status == CREATED)) {
                 // Extract date of failed booking
                 var error_datetime_str = valid_date_payloads[i].pickUpDatetime;
-                processBadResponse(response, error_booking_dates, requestHeaders, requestBody, error_datetime_str);
+                processBadResponse(response, error_booking_dates, requestBody, error_datetime_str);
             }
             completed_intervals++;
             incrementProgressBar(completed_intervals, total_intervals);
@@ -482,9 +511,22 @@
         removeMessages();
         var only_valid_dates_msg = "Booked the following dates:<br />";
         for (let i = 0; i < valid_date_payloads.length; i++) {
+            // Info that will be provided to the log
             var valid_date = new Date(valid_date_payloads[i].pickUpDatetime).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
             only_valid_dates_msg = only_valid_dates_msg + valid_date + "<br />";
+
+            // Safe to say that the booking on its own takes 50 seconds to create
+            logMetricToAWS({
+                LOGGING_API_URL: cloudwatch_url,
+                status: "SUCCESS",
+                message: "Service Booking created",
+                time_saved: 50,
+                feature: "Recurring Booking",
+                api_request_param: valid_date_payloads[i],     
+            });
+
         }
+
         createGreenMessage(only_valid_dates_msg);
 
         if (error_booking_dates.length > 0) {
@@ -498,7 +540,6 @@
 
         let new_create_booking_button = document.querySelector("#new-create-booking-button");
         new_create_booking_button.disabled = true;
-
     }
 
 

@@ -121,10 +121,24 @@
                     console.log("Member Bookings processed: ", data_response_arr._embedded.items.length);
                     const time_saved = 160 * member_bookings.length;
                     console.log("Time saved: ", time_saved);
-                    logSuccessToAWS(LOGGING_API_URL, "Report Exported", time_saved, "Intercepted report payload. No request made", "Intercepted report payload. No response received");
+                    logMetricToAWS({
+                        LOGGING_API_URL: LOGGING_API_URL,
+                        level: "SUCCESS",
+                        message: `Report generated successfully`,
+                        feature: "Report Generation",
+                        time_saved : time_saved,
+                        additional: { 
+                            bookingsProcessed: data_response_arr._embedded.items.length,
+                            invalidBookings: data_response_arr._embedded.items - member_bookings.length,
+                        },
+                    });
                 } catch (error) {
                     console.error("Error generating report: ", error);
-                    logErrorToAWS(LOGGING_API_URL, `Error generating report:" ${error.message}`, "Intercepted report payload. No request made", "Intercepted report payload. No response received");
+                    logMetricToAWS({
+                        LOGGING_API_URL: LOGGING_API_URL,
+                        status: "ERROR",
+                        message: `Error generating report:" ${error.message}`,
+                    });
                 }
             });
         }
@@ -162,9 +176,17 @@
             this.addEventListener("load", function() {
                 try {
                     data_response_arr = JSON.parse(this.responseText);
+                    let formatted_date = stripData(data_response_arr); //TODO: 
+
+
+
                 } catch (error) {
                     console.error("Error parsing response data: ", error);
-                    logErrorToAWS(LOGGING_API_URL, "Error parsing response data", error.message);
+                    logMetricToAWS({
+                        LOGGING_API_URL,
+                        status: "ERROR",
+                        message: `Error parsing response data for Report Generation: ${error.message}`,
+                    });
                 }
             });
         }
