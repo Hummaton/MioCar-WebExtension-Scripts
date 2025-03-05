@@ -1,12 +1,16 @@
 // ==UserScript==
-// @name         Validate Bookings
+// @name         Recurring Booking Backend
 // @namespace    http://tampermonkey.net/
 // @version      2025-01-21
 // @description  try to take over the world!
 // @author       You
 // @match        https://admin.share.car/communities/*/fleet/vehicles/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=share.car
+<<<<<<< HEAD
 // @require      https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/report_dev/utilities.js     //CHANGE TO MAIN BRANCH AFTER MERGING 
+=======
+// @require      https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/main/utilities.js
+>>>>>>> c98c85a (Updated references to the utility script in recurring booking and report script and editted names for consistency)
 // @grant        none
 // ==/UserScript==
 

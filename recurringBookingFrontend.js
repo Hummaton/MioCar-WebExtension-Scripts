@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         Recurring Service Booking
+// @name         Recurring Booking Frontend
 // @namespace    http://tampermonkey.net/
 // @version      2025-01-25
 // @description  Add recurring booking button
