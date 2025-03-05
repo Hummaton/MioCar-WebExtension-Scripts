@@ -101,8 +101,6 @@
                 ...(Object.keys(additional).length > 0 && { details: additional }) // Additional parameters if present
             };
 
-            console.log("Sending payload:", JSON.stringify(payload, null, 2));
-        
             // Send log to AWS
             fetch(LOGGING_API_URL, {
                 method: "POST",

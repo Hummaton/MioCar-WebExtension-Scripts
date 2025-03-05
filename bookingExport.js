@@ -176,10 +176,7 @@
             this.addEventListener("load", function() {
                 try {
                     data_response_arr = JSON.parse(this.responseText);
-                    let formatted_date = stripData(data_response_arr); //TODO: 
-
-
-
+                    // let formatted_date = stripData(data_response_arr); //TODO: Extract only the necessary data for the LLM 
                 } catch (error) {
                     console.error("Error parsing response data: ", error);
                     logMetricToAWS({
