@@ -165,13 +165,13 @@
                 return;
             case TOO_MANY_REQUESTS:
                 DELAY_AMMOUNT = DELAY_AMMOUNT * 1.8; // Increase delay by 80%
+
                 error_string = "Too many requests for recurring booking script to ShareCar API";
                 error_string += "\nDelay increased to: " + DELAY_AMMOUNT;
 
                 if (DELAY_AMMOUNT > 3000) {
                     alert('API issue detected, please try again later. Developers have been notified');
                     error_string += "\nDelay is too long, stopping requests";
-
                     logMetricToAWS({
                         LOGGING_API_URL: cloudwatch_url,
                         level: "ERROR",
@@ -513,6 +513,10 @@
         for (let i = 0; i < valid_date_payloads.length; i++) {
             // Info that will be provided to the log
             var valid_date = new Date(valid_date_payloads[i].pickUpDatetime).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+            var dropoff_date = new Date(valid_date_payloads[i].dropOffDatetime).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+            var valid_vehicle = valid_date_payloads[i].vehicle;
+            var valid_purpose = valid_date_payloads[i].purpose;
+
             only_valid_dates_msg = only_valid_dates_msg + valid_date + "<br />";
 
             // Safe to say that the booking on its own takes 50 seconds to create
@@ -524,7 +528,6 @@
                 feature: "Recurring Booking",
                 api_request_param: valid_date_payloads[i],     
             });
-
         }
 
         createGreenMessage(only_valid_dates_msg);
