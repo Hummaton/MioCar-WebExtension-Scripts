@@ -29,7 +29,7 @@
     }
 
     function formatDate(date) {
-        return `${date.getMonth() + 1}/${date.getDate()}`;
+        return `${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getDate().toString().padStart(2, '0')}`;
     }
 
     async function generateExcelSheet(data) {
@@ -55,8 +55,13 @@
     }
 
     async function processMemberData(data_arr) {
-        const member_bookings = [["Date", "Email", "First Name", "Last Name", "Program Location", "ExternalDataReference", "Survey Sent", "Follow Up Email", "Survey Complete", "Applied Promo Code", "Requested Duration", "Actual Duration", "Miles Driven", "Vehicle Used", "Location", "Revenue", "Trip Purpose", "Notes"]];
+        const member_bookings = [["Date", "Email", "First Name", "Last Name", "Program Location", "ExternalDataReference",
+            "Survey Sent", "Follow Up Email", "Survey Complete", "Applied Promo Code", "Requested Duration", "Actual Duration",
+            "Miles Driven", "Vehicle Used", "Location", "Revenue", "Booking Purpose", "Trip Purpose", "Notes"]];
         const items = data_arr._embedded.items;
+        items.sort((a,b) => new Date(a.pickUpDatetime) - new Date(b.pickUpDatetime));
+        console.log(items);
+
 
         for (let i = 0; i < items.length; i++) {
             if (items[i].status === 'Cancelled') continue;
@@ -82,12 +87,22 @@
 
             const start_date = new Date(items[i].pickUpDatetime);
             const end_date = new Date(items[i].dropOffDatetime);
-            const external_data_reference = `${formatDate(start_date)}-${formatDate(end_date)} from ${formatTime(start_date)}-${formatTime(end_date)}`;
+          
+            var formatted_date;
+            if (start_date.getFullYear() === end_date.getFullYear() &&
+                start_date.getMonth() === end_date.getMonth() &&
+                start_date.getDate() === end_date.getDate()) formatted_date = `${formatDate(start_date)}`;
+            else formatted_date = `${formatDate(start_date)} - ${formatDate(end_date)}`;
+
+            const external_data_reference = `${formatted_date} from ${formatTime(start_date)}-${formatTime(end_date)}`;
 
             const today = new Date();
             const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
 
-            const payload = [lastDayOfMonth, items[i].memberEmail, member_first_name, member_last_name, program_location, external_data_reference, "", "", "", "", requested_duration.toFixed(2), actual_duration.toFixed(2), items[i].tripDistance, items[i].vehiclePlate, items[i].stationName, items[i].totalRevenue, "", ""];
+            const payload = [lastDayOfMonth, items[i].memberEmail, member_first_name, member_last_name, program_location,
+            external_data_reference, "", "", "", "", requested_duration.toFixed(2), actual_duration.toFixed(2), items[i].tripDistance,
+            items[i].vehiclePlate, items[i].stationName, items[i].totalRevenue, items[i].type, "", ""];
+
             member_bookings.push(payload);
         }
 
@@ -190,5 +205,4 @@
         return open.apply(this, [method, url_arg, ...rest]);
     };
 
-    
 })();

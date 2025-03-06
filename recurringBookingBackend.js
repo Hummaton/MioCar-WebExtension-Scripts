@@ -165,7 +165,6 @@
                 return;
             case TOO_MANY_REQUESTS:
                 DELAY_AMMOUNT = DELAY_AMMOUNT * 1.8; // Increase delay by 80%
-
                 error_string = "Too many requests for recurring booking script to ShareCar API";
                 error_string += "\nDelay increased to: " + DELAY_AMMOUNT;
 
@@ -518,7 +517,6 @@
             var valid_purpose = valid_date_payloads[i].purpose;
 
             only_valid_dates_msg = only_valid_dates_msg + valid_date + "<br />";
-
             // Safe to say that the booking on its own takes 50 seconds to create
             logMetricToAWS({
                 LOGGING_API_URL: cloudwatch_url,
