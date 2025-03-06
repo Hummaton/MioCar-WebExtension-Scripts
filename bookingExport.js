@@ -162,6 +162,18 @@
             this.addEventListener("load", function() {
                 try {
                     data_response_arr = JSON.parse(this.responseText);
+                    
+
+                    
+
+
+
+
+                    
+
+
+
+
                 } catch (error) {
                     console.error("Error parsing response data: ", error);
                     logErrorToAWS(LOGGING_API_URL, "Error parsing response data", error.message);
