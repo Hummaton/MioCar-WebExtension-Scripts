@@ -62,6 +62,7 @@
         items.sort((a,b) => new Date(a.pickUpDatetime) - new Date(b.pickUpDatetime));
         console.log(items);
 
+
         for (let i = 0; i < items.length; i++) {
             if (items[i].status === 'Cancelled') continue;
 
@@ -86,6 +87,7 @@
 
             const start_date = new Date(items[i].pickUpDatetime);
             const end_date = new Date(items[i].dropOffDatetime);
+          
             var formatted_date;
             if (start_date.getFullYear() === end_date.getFullYear() &&
                 start_date.getMonth() === end_date.getMonth() &&
@@ -100,6 +102,7 @@
             const payload = [lastDayOfMonth, items[i].memberEmail, member_first_name, member_last_name, program_location,
             external_data_reference, "", "", "", "", requested_duration.toFixed(2), actual_duration.toFixed(2), items[i].tripDistance,
             items[i].vehiclePlate, items[i].stationName, items[i].totalRevenue, items[i].type, "", ""];
+
             member_bookings.push(payload);
         }
 
@@ -133,10 +136,24 @@
                     console.log("Member Bookings processed: ", data_response_arr._embedded.items.length);
                     const time_saved = 160 * member_bookings.length;
                     console.log("Time saved: ", time_saved);
-                    logSuccessToAWS(LOGGING_API_URL, "Report Exported", time_saved, "Intercepted report payload. No request made", "Intercepted report payload. No response received");
+                    logMetricToAWS({
+                        LOGGING_API_URL: LOGGING_API_URL,
+                        level: "SUCCESS",
+                        message: `Report generated successfully`,
+                        feature: "Report Generation",
+                        time_saved : time_saved,
+                        additional: { 
+                            bookingsProcessed: data_response_arr._embedded.items.length,
+                            invalidBookings: data_response_arr._embedded.items - member_bookings.length,
+                        },
+                    });
                 } catch (error) {
                     console.error("Error generating report: ", error);
-                    logErrorToAWS(LOGGING_API_URL, `Error generating report:" ${error.message}`, "Intercepted report payload. No request made", "Intercepted report payload. No response received");
+                    logMetricToAWS({
+                        LOGGING_API_URL: LOGGING_API_URL,
+                        status: "ERROR",
+                        message: `Error generating report:" ${error.message}`,
+                    });
                 }
             });
         }
@@ -174,14 +191,18 @@
             this.addEventListener("load", function() {
                 try {
                     data_response_arr = JSON.parse(this.responseText);
+                    // let formatted_date = stripData(data_response_arr); //TODO: Extract only the necessary data for the LLM 
                 } catch (error) {
                     console.error("Error parsing response data: ", error);
-                    logErrorToAWS(LOGGING_API_URL, "Error parsing response data", error.message);
+                    logMetricToAWS({
+                        LOGGING_API_URL,
+                        status: "ERROR",
+                        message: `Error parsing response data for Report Generation: ${error.message}`,
+                    });
                 }
             });
         }
         return open.apply(this, [method, url_arg, ...rest]);
     };
-
 
 })();
