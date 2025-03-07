@@ -55,9 +55,27 @@
     }
 
     async function processMemberData(data_arr) {
-        const member_bookings = [["Date", "Email", "First Name", "Last Name", "Program Location", "ExternalDataReference",
-            "Survey Sent", "Follow Up Email", "Survey Complete", "Applied Promo Code", "Requested Duration", "Actual Duration",
-            "Miles Driven", "Vehicle Used", "Location", "Revenue", "Booking Purpose", "Trip Purpose", "Notes"]];
+        // TODO: FIX 
+        const member_bookings = [[
+            "Date", 
+            "Email", 
+            "First Name", 
+            "Last Name", 
+            "Program Location", 
+            "ExternalDataReference",
+            "Survey Sent", 
+            "Follow Up Email", 
+            "Survey Complete", 
+            "Applied Promo Code", 
+            "Requested Duration", 
+            "Actual Duration",
+            "Miles Driven", 
+            "Vehicle Used", 
+            "Location", 
+            "Revenue", 
+            "Trip Purpose", 
+            "Notes"          
+        ]];
         const items = data_arr._embedded.items;
         items.sort((a,b) => new Date(a.pickUpDatetime) - new Date(b.pickUpDatetime));
         console.log(items);
@@ -99,9 +117,24 @@
             const today = new Date();
             const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
 
-            const payload = [lastDayOfMonth, items[i].memberEmail, member_first_name, member_last_name, program_location,
-            external_data_reference, "", "", "", "", requested_duration.toFixed(2), actual_duration.toFixed(2), items[i].tripDistance,
-            items[i].vehiclePlate, items[i].stationName, items[i].totalRevenue, items[i].type, "", ""];
+            // TODO: FIX
+            const payload = [
+                lastDayOfMonth, 
+                items[i].memberEmail, 
+                member_first_name, 
+                member_last_name, 
+                program_location,
+                external_data_reference, 
+                "", "", "", "", // Survey Sent, Follow Up Email, Survey Complete, Applied Promo Code
+                requested_duration.toFixed(2), 
+                actual_duration.toFixed(2), 
+                items[i].tripDistance,
+                items[i].vehiclePlate, 
+                items[i].stationName, 
+                items[i].totalRevenue, 
+                items[i].type, 
+                "" // Notes
+            ];
 
             member_bookings.push(payload);
         }
@@ -151,7 +184,7 @@
                     console.error("Error generating report: ", error);
                     logMetricToAWS({
                         LOGGING_API_URL: LOGGING_API_URL,
-                        status: "ERROR",
+                        level: "ERROR",
                         message: `Error generating report:" ${error.message}`,
                     });
                 }
@@ -196,7 +229,7 @@
                     console.error("Error parsing response data: ", error);
                     logMetricToAWS({
                         LOGGING_API_URL,
-                        status: "ERROR",
+                        level: "ERROR",
                         message: `Error parsing response data for Report Generation: ${error.message}`,
                     });
                 }
