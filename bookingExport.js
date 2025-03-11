@@ -83,6 +83,7 @@
 
             const requested_duration = Math.abs(new Date(items[i].dropOffDatetime) - new Date(items[i].pickUpDatetime)) / (1000 * 60 * 60);
             const actual_duration = Math.ceil(Math.abs(new Date(items[i].tripDropOffDatetime) - new Date(items[i].tripPickUpDatetime)) / (1000 * 60 * 60) * 4) / 4;
+            // convert ms to hours with 1000*60*60 then *4 with ceil() then divide by 4 to get rounded to ceil of nearest quarter
 
             const start_date = new Date(items[i].pickUpDatetime);
             const end_date = new Date(items[i].dropOffDatetime);
