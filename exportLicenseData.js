@@ -5,47 +5,73 @@
 // @description  Added as a test script to export license data and will be used as a template for helping with autofilling MVR Checker form
 // @author       You
 // @match        https://admin.share.car/communities/*/customers/members*
+// @match        <FILL IN URL HERE>
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=share.car
-// @updateURL    https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/refs/heads/main/exportLicenseData.js
-// @downloadURL  https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/refs/heads/main/exportLicenseData.js
 // @grant        none
 // ==/UserScript==
 
 (function() {
     'use strict';
 
-    // Function to format user data into payload for MVR Checker
-    function processUserInfo() {
-        // Process user info into what mvr checker requires
-        var user_DOB = document.querySelector("body > sc-app-root > sc-app-root > div:nth-child(2) > section > div > div > div:nth-child(1) > main > ng-component > form > div > section:nth-child(1) > section > sc-personal-info-summary > div:nth-child(2) > div.col-md-4 > div > sc-date-display > span");
+    const MVRCHECKURL = "FILL IN URL HERE";
+    const USERNAME = "FILL IN USERNAME HERE";
+    const PASSWORD = "FILL IN PASSWORD HERE";
 
-        var user_name = document.querySelector("body > sc-app-root > sc-app-root > div:nth-child(2) > section > div > div > div:nth-child(1) > main > ng-component > form > div > section:nth-child(1) > section > sc-personal-info-summary > div:nth-child(1) > div:nth-child(1) > div > span");
-        user_name = user_name.innerHTML.split(" ");
-        const user_first_name = user_name[0];
-        const user_last_name = user_name[1];
 
-        const reference = document.querySelector("body > sc-app-root > sc-app-root > div:nth-child(2) > section > div > div > div:nth-child(1) > main > ng-component > form > div > section:nth-child(1) > section > sc-personal-info-summary > div.row.ng-star-inserted > div:nth-child(6) > div > span");
+    function openMVRCheckWindow(memberInfo) {
+        // Convert object to base64    
+        
+        // CURRENT SOLUTION: SUBJECT TO CHANGE
+        const base64 = btoa(JSON.stringify(memberInfo));
+        const targetURL = `${MVRCHECKURL}/#data=${base64}`;
 
-        const state = document.querySelector("#drivingLicenceSection > sc-driving-licence-summary > div > div:nth-child(2) > div:nth-child(6)");
-        const dv_num = document.querySelector("#drivingLicenceSection > sc-driving-licence-summary > div > div:nth-child(1) > div:nth-child(2)");
-
-        // create payload
-        const payload = {
-            'firstName': user_first_name,
-            'lastName': user_last_name,
-            'dob': user_DOB.innerHTML,
-            'reference': reference.innerHTML,
-            'state': state.innerHTML,
-            'driverLicense': dv_num.innerHTML
-        };
-
-        console.log(payload);
-
-        return payload;
+        window.open(targetURL, "_blank");
     }
 
-    function fillMVRChecker(user_info) {
+    // Function to format user data into a CSV file
+    function openWindow() {
 
+        // Helper function to safely extract text content from a selector
+        function getText(selector, defaultValue = "N/A") {
+            const element = document.querySelector(selector);
+            return element ? element.innerText.trim() : defaultValue;
+        }
+
+        // Gather user data
+        const fullName = getText("body > sc-app-root > sc-app-root > div:nth-child(2) > section > div > div > div:nth-child(1) > main > ng-component > form > div > section:nth-child(1) > section > sc-personal-info-summary > div:nth-child(1) > div:nth-child(1) > div > span");
+        const dob = getText("body > sc-app-root > sc-app-root > div:nth-child(2) > section > div > div > div:nth-child(1) > main > ng-component > form > div > section:nth-child(1) > section > sc-personal-info-summary > div:nth-child(2) > div.col-md-4 > div > sc-date-display > span");
+        const licenseNumber = getText("#drivingLicenceSection > sc-driving-licence-summary > div > div:nth-child(1) > div:nth-child(2)");
+        const state = getText("#drivingLicenceSection > sc-driving-licence-summary > div > div:nth-child(2) > div:nth-child(6)");
+        // var userEmail = document.querySelector("body > sc-app-root > sc-app-root > div:nth-child(2) > section > div > div > div:nth-child(1) > main > ng-component > form > div > section:nth-child(1) > section > sc-personal-info-summary > div:nth-child(1) > div:nth-child(2) > div > span > a");
+        // var userPhone = document.querySelector("body > sc-app-root > sc-app-root > div:nth-child(2) > section > div > div > div:nth-child(1) > main > ng-component > form > div > section:nth-child(1) > section > sc-personal-info-summary > div:nth-child(1) > div:nth-child(3) > div > sc-telephone-link > a > span");
+        // var userAddress = document.querySelector("body > sc-app-root > sc-app-root > div:nth-child(2) > section > div > div > div:nth-child(1) > main > ng-component > form > div > section:nth-child(1) > section > sc-personal-info-summary > div:nth-child(2) > div.col-md-8 > div > span > a");
+        
+        ///TODO: THIS NEEDS TO CLARIFIED WITH MIOCAR
+        const resident_community = getText("body > sc-app-root > sc-app-root > div:nth-child(2) > section > div > div > div:nth-child(1) > main > ng-component > form > div > section:nth-child(1) > section > sc-personal-info-summary > div.row.ng-star-inserted > div:nth-child(6) > div > span");
+
+        // Split the member name into first, middle, and last names
+        const nameParts = fullName.split(" ");
+        const firstName = nameParts[0] || "N/A";
+        const middleName = nameParts.length > 2 ? nameParts.slice(1, -1).join(" ") : "N/A";
+        const lastName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : "N/A";
+
+        // Construct member information object
+        const member_info = {
+            first_name: firstName,
+            middle_name: middleName,
+            last_name: lastName,
+            dob: dob,
+            license_number: licenseNumber,
+            state: state,
+            resident_community: resident_community === "--" ? "N/A" : resident_community,
+            username: USERNAME,
+            password: PASSWORD,
+        };
+
+        console.log("Opening new window to MVRCheck...");
+
+        openMVRCheckWindow(member_info);
+        
     }
 
     // Function to add the recurring service booking options
@@ -55,16 +81,15 @@
 
         if (actionRow && actionRow.children.length == 1) {
             // Create CSV export button
-            const mvr_button = document.createElement('button');
-            mvr_button.type = 'button';
-            mvr_button.className = 'p-element btn btn-link';
-            mvr_button.setAttribute('ptooltip', 'Transfer data to MVR Checker');
-            mvr_button.innerHTML = '<i class="fa fa-download"></i> Export to MVR Checker';
-            mvr_button.onclick = function(){
-                const user_info = processUserInfo();
-                fillMVRChecker(user_info);
-            };
-
+            const csvButton = document.createElement('button');
+            csvButton.type = 'button';
+            csvButton.className = 'p-element btn btn-link';
+            csvButton.setAttribute('ptooltip', 'Download perosnal information as CSV');
+            csvButton.innerHTML = '<i class="fa fa-download"></i> Export to MVR Checker';
+            csvButton.onclick = function(){
+                openWindow();
+            }; 
+            
             // Append button to the row div after the first child
             actionRow.insertBefore(mvr_button, actionRow.children[0]);
         }
@@ -88,27 +113,3 @@
     });
 
 })();
-
-
-
-/* SELECTORS FOR DATA TO CSV
-
-NAME:
-body > sc-app-root > sc-app-root > div:nth-child(2) > section > div > div > div:nth-child(1) > main > ng-component > form > div > section:nth-child(1) > section > sc-personal-info-summary > div:nth-child(1) > div:nth-child(1) > div > span
-
-EMAIL:
-body > sc-app-root > sc-app-root > div:nth-child(2) > section > div > div > div:nth-child(1) > main > ng-component > form > div > section:nth-child(1) > section > sc-personal-info-summary > div:nth-child(1) > div:nth-child(2) > div > span > a
-
-PHONE:
-body > sc-app-root > sc-app-root > div:nth-child(2) > section > div > div > div:nth-child(1) > main > ng-component > form > div > section:nth-child(1) > section > sc-personal-info-summary > div:nth-child(1) > div:nth-child(3) > div > sc-telephone-link > a > span
-
-DOB:
-body > sc-app-root > sc-app-root > div:nth-child(2) > section > div > div > div:nth-child(1) > main > ng-component > form > div > section:nth-child(1) > section > sc-personal-info-summary > div:nth-child(2) > div.col-md-4 > div > sc-date-display > span
-
-ADDRESS:
-body > sc-app-root > sc-app-root > div:nth-child(2) > section > div > div > div:nth-child(1) > main > ng-component > form > div > section:nth-child(1) > section > sc-personal-info-summary > div:nth-child(2) > div.col-md-8 > div > span > a
-
-RESIDENT COMMUNITY:
-body > sc-app-root > sc-app-root > div:nth-child(2) > section > div > div > div:nth-child(1) > main > ng-component > form > div > section:nth-child(1) > section > sc-personal-info-summary > div.row.ng-star-inserted > div:nth-child(6) > div > span
-
-*/
