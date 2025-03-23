@@ -10,6 +10,14 @@
 (function () {
     'use strict';
 
+    function login(username, password) {
+        // Fill in the login form and submit
+        document.querySelector("#l-name").value = username;
+        document.querySelector("#l-pass").value = password;
+        // wait for 4 seconds 
+        document.querySelector("#l-btn").click();
+    }
+
     const hash = window.location.hash;
 
     if (hash.startsWith("#data=")) {
@@ -31,7 +39,18 @@
             }
 
             //TODO: Login with credentials 
-            login(data.username, data.password);
+
+            let username_element = document.querySelector("#l-name");
+            let password_element = document.querySelector("#l-pass");
+
+            if (username_element && password_element) {
+                login(data.username, data.password);
+            }
+
+            // setTimeout(() => {
+            //         console.log("[MVRCheck] Redirecting to MVRCheck order page.");
+            //     }
+            // }, 4000);
             
             data = null; // Clear data for security reasons
 
