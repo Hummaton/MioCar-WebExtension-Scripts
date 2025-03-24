@@ -14,6 +14,8 @@
     'use strict';
 
     const MVRCHECKURL = "FILL IN URL HERE";
+
+    // For now we need to fill in the username and password for the MVR Checker. But in the future we can use a secure way to pull these credentials from a server
     const USERNAME = "FILL IN USERNAME HERE";
     const PASSWORD = "FILL IN PASSWORD HERE";
 
