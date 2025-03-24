@@ -12,6 +12,7 @@
 
     const currentUrl = window.location.href;
     const ORDERFORMURL = "Fill in URL HERE";
+    const INPUTFORMURL = "Fill in URL HERE";
 
     const hash = window.location.hash;
 
@@ -112,6 +113,43 @@
             document.querySelector("#CRD_INSTANT_DRIVING").click();
             document.querySelector("#order-form > div.row > div.col-sm-6.text-right > div > button").click();
             sessionStorage.setItem("script_state", "order form submitted");
+
+        } catch (err) {
+            console.error("Failed to fill form:", err);
+        }
+    }
+
+    // -------- INPUT FORM PAGE MEMBER INPUT PART 1--------
+    else if (currentUrl.includes("orderwizard") && sessionStorage.getItem("script_state") === "order form submitted") {
+        console.log("[MVRCheck] On input form page.");
+
+        const stored = sessionStorage.getItem("mvr_form_input");
+        if (!stored) {
+            console.error("[MVRCheck] No stored data found. Error!.");
+            return;
+        }
+
+        try {
+            const mvr_form_input = JSON.parse(stored);
+            console.log("[MVRCheck] Filling MVR form input...");
+
+            // Fill in the form
+            if (mvr_form_input.resident_community !== "N/A") {
+                document.querySelector("#order\\.reference").value = mvr_form_input.resident_community;
+            }
+            
+            if (mvr_form_input.middle_name !== "N/A") {
+                document.querySelector("#applicant\\.middleName").value = mvr_form_input.middle_name;
+            }
+
+            document.querySelector("#applicant\\.lastName").value = mvr_form_input.last_name;
+            document.querySelector("#applicant\\.firstName").value = mvr_form_input.first_name;
+            document.querySelector("#order-form > div:nth-child(5) > div:nth-child(1) > div.col-xs-12.col-sm-12.col-md-3 > div > div:nth-child(2) > input").value = mvr_form_input.dob;
+
+            sessionStorage.setItem("script_state", "input form part 1 filled");
+
+            // Submit the form
+            document.querySelector("#applicantForm > div.row > div.col-sm-6.text-right > div > button").click();
 
         } catch (err) {
             console.error("Failed to fill form:", err);
