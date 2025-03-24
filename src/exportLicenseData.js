@@ -23,13 +23,13 @@
         
         // CURRENT SOLUTION: SUBJECT TO CHANGE
         const base64 = btoa(JSON.stringify(memberInfo));
-        const targetURL = `${MVRCHECKURL}/#data=${base64}`;
+        const targetURL = `${MVRCHECKURL}#data=${base64}`;
 
         window.open(targetURL, "_blank");
     }
 
     // Function to format user data into a CSV file
-    function openWindow() {
+    function extractInfo() {
 
         // Helper function to safely extract text content from a selector
         function getText(selector, defaultValue = "N/A") {
@@ -81,13 +81,13 @@
 
         if (actionRow && actionRow.children.length == 1) {
             // Create CSV export button
-            const csvButton = document.createElement('button');
-            csvButton.type = 'button';
-            csvButton.className = 'p-element btn btn-link';
-            csvButton.setAttribute('ptooltip', 'Download perosnal information as CSV');
-            csvButton.innerHTML = '<i class="fa fa-download"></i> Export to MVR Checker';
-            csvButton.onclick = function(){
-                openWindow();
+            const mvr_button = document.createElement('button');
+            mvr_button.type = 'button';
+            mvr_button.className = 'p-element btn btn-link';
+            mvr_button.setAttribute('ptooltip', 'Download perosnal information as CSV');
+            mvr_button.innerHTML = '<i class="fa fa-download"></i> Export to MVR Checker';
+            mvr_button.onclick = function(){
+                extractInfo();
             }; 
             
             // Append button to the row div after the first child
