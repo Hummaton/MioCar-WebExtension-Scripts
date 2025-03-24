@@ -156,4 +156,41 @@
         }
     }
 
+     // -------- INPUT FORM PAGE MEMBER INPUT PART 2--------
+     else if (currentUrl.includes("orderwizard") && sessionStorage.getItem("script_state") === "input form part 1 filled") {
+        console.log("[MVRCheck] On input form page.");
+
+        const stored = sessionStorage.getItem("mvr_form_input");
+        if (!stored) {
+            console.error("[MVRCheck] No stored data found. Error!.");
+            return;
+        }
+
+        try {
+            const mvr_form_input = JSON.parse(stored);
+            console.log("[MVRCheck] Filling MVR form input...");
+
+            // Fill in the form
+            document.querySelector("#searchBeans\\[CRD_INSTANT_DRIVING\\]\\.verifications\\[0\\]\\.licenseNumber").value = mvr_form_input.license_number;
+            
+            const selectEl = document.querySelector('select[name="searchBeans[CRD_INSTANT_DRIVING].verifications[0].state"]');
+            if (selectEl) {
+                selectEl.value = mvr_form_input.state; // or any other valid value like "TX", "NY", etc.
+
+                // Trigger onchange handler if needed
+                const event = new Event('change', { bubbles: true });
+                selectEl.dispatchEvent(event);
+            }
+
+            sessionStorage.setItem("script_state", "form filling complete!");
+
+            // Submit the form
+            document.querySelector("#page-main > form > div.row > div.col-sm-6.text-right > div > button").click();
+
+
+        } catch (err) {
+            console.error("Failed to fill form:", err);
+        }
+    }
+
 })();
