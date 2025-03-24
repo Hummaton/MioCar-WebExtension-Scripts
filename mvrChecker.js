@@ -10,10 +10,103 @@
 (function () {
     'use strict';
 
-    const currentUrl = window.location.href;
     const ORDERFORMURL = "Fill in URL HERE";
-    const INPUTFORMURL = "Fill in URL HERE";
 
+    // Function to process state data
+    function process_state_data(state) {
+        const stateMap = {
+            "Alabama": "AL",
+            "Alaska": "AK",
+            "Arizona": "AZ",
+            "Arkansas": "AR",
+            "California": "CA",
+            "Colorado": "CO",
+            "Connecticut": "CT",
+            "Delaware": "DE",
+            "District of Columbia": "DC",
+            "Florida": "FL",
+            "Georgia": "GA",
+            "Hawaii": "HI",
+            "Idaho": "ID",
+            "Illinois": "IL",
+            "Indiana": "IN",
+            "Iowa": "IA",
+            "Kansas": "KS",
+            "Kentucky": "KY",
+            "Louisiana": "LA",
+            "Maine": "ME",
+            "Maryland": "MD",
+            "Massachusetts": "MA",
+            "Michigan": "MI",
+            "Minnesota": "MN",
+            "Mississippi": "MS",
+            "Missouri": "MO",
+            "Montana": "MT",
+            "Nebraska": "NE",
+            "Nevada": "NV",
+            "New Hampshire": "NH",
+            "New Jersey": "NJ",
+            "New Mexico": "NM",
+            "New York": "NY",
+            "North Carolina": "NC",
+            "North Dakota": "ND",
+            "Ohio": "OH",
+            "Oklahoma": "OK",
+            "Oregon": "OR",
+            "Pennsylvania": "PA",
+            "Rhode Island": "RI",
+            "South Carolina": "SC",
+            "South Dakota": "SD",
+            "Tennessee": "TN",
+            "Texas": "TX",
+            "Utah": "UT",
+            "Vermont": "VT",
+            "Virginia": "VA",
+            "Washington": "WA",
+            "West Virginia": "WV",
+            "Wisconsin": "WI",
+            "Wyoming": "WY",
+    
+            "UST - American Samoa": "AS",
+            "UST - Fed States of Micronesia": "FM",
+            "UST - Guam": "GU",
+            "UST - Marshall Islands": "MH",
+            "UST - Northern Mariana Islands": "MP",
+            "UST - Palau": "PW",
+            "UST - Puerto Rico": "PR",
+            "UST - Virgin Islands": "VI",
+    
+            "CAN - Alberta": "AB",
+            "CAN - British Columbia": "BC",
+            "CAN - Manitoba": "MB",
+            "CAN - New Brunswick": "NB",
+            "CAN - Newfoundland & Labrador": "NL",
+            "CAN - Northwest Territories": "NT",
+            "CAN - Nova Scotia": "NS",
+            "CAN - Nunavut": "NU",
+            "CAN - Ontario": "ON",
+            "CAN - Prince Edward Island": "PE",
+            "CAN - Quebec": "QC",
+            "CAN - Saskatchewan": "SK",
+            "CAN - Yukon": "YT"
+        };
+    
+        // Normalize input
+        const input = (state || "").trim().toUpperCase();
+    
+        // Check if it's already a valid 2-letter abbreviation
+        if (Object.values(stateMap).includes(input)) {
+            return input;
+        }
+    
+        // Otherwise, try to convert from full name (case-insensitive)
+        const match = Object.entries(stateMap).find(([name]) => name.toUpperCase() === input);
+        return match ? match[1] : "";
+    }
+    
+    // -------- MAIN SCRIPT --------
+
+    const currentUrl = window.location.href;
     const hash = window.location.hash;
 
     if (hash.startsWith("#data=")) {
@@ -21,6 +114,8 @@
             const encoded = hash.replace("#data=", "");
             const json = atob(encoded);
             const data = JSON.parse(json);
+
+            data.state = process_state_data(data.state);
 
             // Save form info to sessionStorage
             const mvr_form_input = {
@@ -170,17 +265,18 @@
             const mvr_form_input = JSON.parse(stored);
             console.log("[MVRCheck] Filling MVR form input...");
 
-            // Fill in the form
-            document.querySelector("#searchBeans\\[CRD_INSTANT_DRIVING\\]\\.verifications\\[0\\]\\.licenseNumber").value = mvr_form_input.license_number;
-            
+            // Fill in the form            
             const selectEl = document.querySelector('select[name="searchBeans[CRD_INSTANT_DRIVING].verifications[0].state"]');
             if (selectEl) {
+                console.log("[MVRCheck] Selecting state:", mvr_form_input.state);
                 selectEl.value = mvr_form_input.state; // or any other valid value like "TX", "NY", etc.
 
                 // Trigger onchange handler if needed
                 const event = new Event('change', { bubbles: true });
                 selectEl.dispatchEvent(event);
             }
+
+            document.querySelector("#searchBeans\\[CRD_INSTANT_DRIVING\\]\\.verifications\\[0\\]\\.licenseNumber").value = mvr_form_input.license_number;
 
             sessionStorage.setItem("script_state", "form filling complete!");
 
