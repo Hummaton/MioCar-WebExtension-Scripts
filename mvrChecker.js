@@ -74,6 +74,8 @@
                 history.replaceState(null, "", window.location.pathname);
 
                 loginButton.click();
+
+                // TODO: HANDLE LOGIN ERROR
             }        
     }
 
@@ -92,6 +94,27 @@
                         
         } catch (err) {
             console.error("Failed to parse stored data:", err);
+        }
+    }
+
+    // -------- ORDER FORM PAGE --------  TODO: 
+    else if (currentUrl.includes("order/new.taz") && sessionStorage.getItem("script_state") === "order form") {
+        console.log("[MVRCheck] On order form page.");
+
+        const stored = sessionStorage.getItem("mvr_form_input");
+        if (!stored) {
+            console.error("[MVRCheck] No stored data found. Error!.");
+            return;
+        }
+
+        try {
+            console.log("[MVRCheck] Filling MVR Driving History input...");
+            document.querySelector("#CRD_INSTANT_DRIVING").click();
+            document.querySelector("#order-form > div.row > div.col-sm-6.text-right > div > button").click();
+            sessionStorage.setItem("script_state", "order form submitted");
+
+        } catch (err) {
+            console.error("Failed to fill form:", err);
         }
     }
 
