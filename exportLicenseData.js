@@ -76,63 +76,86 @@
 
     // Function to populate the modal with input fields
     function populateModal(modal) {
+        // Create a backdrop to grey out the rest of the page
+        const backdrop = document.createElement('div');
+        backdrop.className = 'modal-backdrop';
+        backdrop.style.position = 'fixed';
+        backdrop.style.top = '0';
+        backdrop.style.left = '0';
+        backdrop.style.width = '100%';
+        backdrop.style.height = '100%';
+        backdrop.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+        backdrop.style.zIndex = '9998'; // Ensure it is below the modal
+        document.body.appendChild(backdrop);
+
+        modal.className = 'modal-dialog';
         modal.style.position = 'fixed';
         modal.style.top = '0';
         modal.style.left = '0';
         modal.style.width = '100%';
-        modal.style.height = '100%';
-        modal.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+        modal.style.height = '29%';
         modal.style.display = 'flex';
         modal.style.justifyContent = 'center';
         modal.style.alignItems = 'center';
+        modal.style.zIndex = '9999'; // Ensure it is above the backdrop
 
         const modalContent = document.createElement('div');
-        modalContent.style.width = '300px';
-        modalContent.style.height = '200px';
+        modalContent.className = 'modal-content';
+        modalContent.style.width = '400px';
         modalContent.style.backgroundColor = 'white';
-        modalContent.style.padding = '20px';
         modalContent.style.borderRadius = '5px';
-        modalContent.style.display = 'flex';
-        modalContent.style.flexDirection = 'column';
-        modalContent.style.justifyContent = 'space-between';
+        modalContent.style.overflow = 'hidden';
+        modalContent.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.2)';
 
-        const usernameInput = document.createElement('input');
-        usernameInput.id = 'mvr-username';
-        usernameInput.type = 'text';
-        usernameInput.placeholder = 'Username';
-        usernameInput.style.padding = '5px';
-        usernameInput.style.marginBottom = '10px';
+        const modalHeader = document.createElement('div');
+        modalHeader.className = 'modal-header';
+        modalHeader.style.textAlign = 'center';
+        modalHeader.style.padding = '15px';
+        modalHeader.style.borderBottom = '1px solid #ddd';
+        modalHeader.innerHTML = `
+            <h3 class="modal-title" style="margin: 0;">MVR Checker Credentials</h3>
+            <a class="close-button" style="position: absolute; top: 10px; right: 15px; cursor: pointer;">
+            <i aria-hidden="true" class="fa fa-times"></i>
+            </a>
+        `;
+        modalHeader.querySelector('.close-button').onclick = () => {
+            document.body.removeChild(modal);
+            document.body.removeChild(backdrop); // Remove the backdrop when modal is closed
+        };
 
-        const passwordInput = document.createElement('input');
-        passwordInput.id = 'mvr-password';
-        passwordInput.type = 'password';
-        passwordInput.placeholder = 'Password';
-        passwordInput.style.padding = '5px';
-        passwordInput.style.marginBottom = '10px';
+        const modalBody = document.createElement('div');
+        modalBody.className = 'modal-body';
+        modalBody.style.padding = '20px';
+        modalBody.innerHTML = `
+            <div class="form-group" style="margin-bottom: 15px;">
+            <label for="mvr-username" style="display: block; margin-bottom: 5px;">Username</label>
+            <input id="mvr-username" type="text" class="form-control" placeholder="Enter username" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+            </div>
+            <div class="form-group">
+            <label for="mvr-password" style="display: block; margin-bottom: 5px;">Password</label>
+            <input id="mvr-password" type="password" class="form-control" placeholder="Enter password" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+            </div>
+        `;
 
-        const submitButton = document.createElement('button');
-        submitButton.id = 'mvr-submit';
-        submitButton.type = 'button';
-        submitButton.innerText = 'Submit';
-        submitButton.style.padding = '5px';
-        submitButton.style.backgroundColor = 'green';
-        submitButton.style.color = 'white';
-        submitButton.style.border = 'none';
+        const modalFooter = document.createElement('div');
+        modalFooter.className = 'modal-footer';
+        modalFooter.style.display = 'flex';
+        modalFooter.style.justifyContent = 'space-between';
+        modalFooter.style.padding = '10px 20px';
+        modalFooter.style.borderTop = '1px solid #ddd';
+        modalFooter.innerHTML = `
+            <button id="mvr-submit" type="button" class="btn btn-success" style="padding: 10px 20px; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer;">Submit</button>
+            <button id="mvr-cancel" type="button" class="btn btn-danger" style="padding: 10px 20px; background-color: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer;">Cancel</button>
+        `;
 
-        const cancelButton = document.createElement('button');
-        cancelButton.id = 'mvr-cancel';
-        cancelButton.type = 'button';
-        cancelButton.innerText = 'Cancel';
-        cancelButton.style.padding = '5px';
-        cancelButton.style.backgroundColor = 'red';
-        cancelButton.style.color = 'white';
-        cancelButton.style.border = 'none';
+        modalFooter.querySelector('#mvr-cancel').onclick = () => {
+            document.body.removeChild(modal);
+            document.body.removeChild(backdrop); // Remove the backdrop when modal is closed
+        };
 
-        modalContent.appendChild(usernameInput);
-        modalContent.appendChild(passwordInput);
-        modalContent.appendChild(submitButton);
-        modalContent.appendChild(cancelButton);
-
+        modalContent.appendChild(modalHeader);
+        modalContent.appendChild(modalBody);
+        modalContent.appendChild(modalFooter);
         modal.appendChild(modalContent);
         document.body.appendChild(modal);
 
@@ -162,7 +185,6 @@
                 const usernameInput = document.getElementById('mvr-username');
                 const passwordInput = document.getElementById('mvr-password');
                 const submitButton = document.getElementById('mvr-submit');
-                const cancelButton = document.getElementById('mvr-cancel');
 
                 // Pre-fill the input fields with stored credentials
                 if (mvr_username) usernameInput.value = mvr_username;
@@ -182,13 +204,10 @@
                     sessionStorage.setItem('mvr_password', mvr_password);
 
                     document.body.removeChild(modal);
+                    document.body.removeChild(document.querySelector('.modal-backdrop')); // Remove the backdrop when modal is closed
                     extractInfo(mvr_username, mvr_password);
                 };
 
-                cancelButton.onclick = () => {
-                    document.body.removeChild(modal);
-                    return;
-                };
 
             }; 
             
