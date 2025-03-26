@@ -162,18 +162,40 @@
             this.addEventListener("load", function() {
                 try {
                     data_response_arr = JSON.parse(this.responseText);
+
+
+                    const response = data_response_arr.response;           
+                    const embedded = response?._embedded;                  
+                    const bookings = embedded?.items || [];
+
+                    const fieldsToKeep = [
+                        "status",
+                        "createdAt",
+                        "pickUpDatetime",
+                        "dropOffDatetime",
+                        "vehicleMake",
+                        "vehicleModel",
+                        "vehiclePlate",
+                        "stationName",
+                        "totalRevenue",
+                        "type"
+                    ];
+
+                    for (let i = 0; i < bookings.length; i++) {
+                        const original = bookings[i];
+                        const cleaned = {};
+                        for (const field of fieldsToKeep) {
+                            if (field in original) {
+                                cleaned[field] = original[field];
+                            }
+                        }
+                        bookings[i] = cleaned;  
+                    }
+
+                    console.log("Cleaned booking data:", data_response_arr);                       
                     
 
                     
-
-
-
-
-                    
-
-
-
-
                 } catch (error) {
                     console.error("Error parsing response data: ", error);
                     logErrorToAWS(LOGGING_API_URL, "Error parsing response data", error.message);

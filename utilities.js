@@ -112,6 +112,39 @@
         return headers;
     }
 
+    function sanitizeResponseData(data) {
+        if (!data) {
+            return data;
+        }
+        // copy of original data
+        const sanitizedData = JSON.parse(JSON.stringify(data));
+        
+        const sensitiveFields = [
+            'status', 
+            'createdAt', 
+            'pickUpDatetime', 
+            'dropOffDatetime',
+            'vehicleMake',
+            'vehicleModel',
+            'vehiclePlate',
+            'stationName',
+            'totalRevenue',
+            'type'
+
+        ];
+        
+        // Remove sensitive fields from each item
+        sanitizedData._embedded.items.forEach(item => {
+            sensitiveFields.forEach(field => {
+                if (item.hasOwnProperty(field)) {
+                    delete item[field];
+                }
+            });
+        });
+        
+        return sanitizedData;
+    }
+
     // Make the retrieveAccessToken function available globally but protect against overwriting
     if (!window.getBrowserStorageValue) {
         Object.defineProperty(window, 'getBrowserStorageValue', {
@@ -170,6 +203,17 @@
         console.log('getPostHeader function is now globally available.');
     } else {
         console.warn('getPostHeader is already defined and will not be overwritten.');
+    }
+
+    if (!window.sanitizeResponseData) {
+        Object.defineProperty(window, 'sanitizeResponseData', {
+            value: sanitizeResponseData,
+            writable: false, // Prevent overwriting
+            configurable: false, // Prevent redefinition
+        });
+        console.log('sanitizeResponseData function is now globally available.');
+    } else {
+        console.warn('sanitizeResponseData is already defined and will not be overwritten.');
     }
     
 })();
