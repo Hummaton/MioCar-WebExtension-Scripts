@@ -14,15 +14,32 @@
 (function() {
     'use strict';
 
+    /************* FILL IN FOR PRODUCTION SCRIPT  */
+    const TARGET_URL = ""; // Target API endpoint
+    const LOGGING_API_URL = ""; // Logging API endpoint
+    /************* FILL IN FOR PRODUCTION SCRIPT  */
+
+    // Empty array to store API response data
+    var data_response_arr = [];
+
     // Function to add the date selection buttons
-    function addColumn() {
+    function addColumn(data) {
         // Select the target element where buttons will be added
         var table = document.querySelector('#membersTable');
 
         if (table) {
             // Create the table header element
             createTableHeader();
-            createTableBody();
+
+            // add dates
+            console.log("ADD COLUMN SECTION:");
+            for (let i=0; i<10;i++) {
+                let std_date = createdAtDateToStdDate(new Date(data_response_arr._embedded.members[i].createdAt));
+
+                createTableBody(std_date, (i+1));
+                //createTableBody("Test Date "+(i+1), (i+1));
+            }
+
             editTableProperties();
         }
 
@@ -73,13 +90,22 @@
             document.querySelector('thead tr').appendChild(tableHead);
         }
 
-        function createTableBody() {
+
+        function createTableBody(date_str, iter) { // date : String
             // Create the table data element
             const signupDate = document.createElement('td');
-            signupDate.textContent = 'Sample Date';
+            signupDate.textContent = date_str;
 
             // Append the table data element to the table
-            document.querySelector("#membersTable > tbody > tr").appendChild(signupDate);
+            document.querySelector("#membersTable > tbody > tr:nth-child(" + iter + ")").appendChild(signupDate);
+        }
+
+        function createdAtDateToStdDate(created_at_date) {
+            const day = String(created_at_date.getDate()).padStart(2,"0");
+            const month = String(created_at_date.getMonth() + 1).padStart(2,"0");
+            const year = created_at_date.getFullYear();
+
+            return `${month}/${day}/${year}`;
         }
 
         function editTableProperties() {
@@ -91,12 +117,26 @@
         }
     }
 
-    // Create a MutationObserver to watch for changes in the DOM
-    const observer = new MutationObserver((_, obs) => {
-        // Check if the target (form) element is now loaded in the DOM
+    /*************         Main Function     *************/
+
+    async function wait_for_data() {
+        while (!data_response_arr || data_response_arr.length === 0) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+        }
+        return data_response_arr;
+    }
+
+    // Observer to detect when the page has loaded and to add the button
+
+    const observer = new MutationObserver(async(_, obs) => {
         if (document.querySelector('#membersTable')) {
-            addColumn(); // Add the buttons
-            obs.disconnect(); // Stop observing once the element is found and buttons are added
+
+            console.log("waiting for data...");
+            const data_response = await wait_for_data();
+            console.log("received data", data_response);
+
+            addColumn(data_response_arr);
+            obs.disconnect();
         }
     });
 
@@ -106,5 +146,38 @@
         subtree: true
     });
 
-})();
 
+    // Intercept API call to get booking data
+    const open = window.XMLHttpRequest.prototype.open;
+    window.XMLHttpRequest.prototype.open = function(method, url_arg, ...rest) {
+        /*
+        if (!document.querySelector("#report-export-button")) {
+            observer.observe(document, {
+                childList: true,
+                subtree: true
+            });
+        }
+        */
+
+        if (url_arg.includes(TARGET_URL)) {
+            this.addEventListener("load", function() {
+                try {
+                    data_response_arr = JSON.parse(this.responseText);
+                    // let formatted_date = stripData(data_response_arr); //TODO: Extract only the necessary data for the LLM
+                } catch (error) {
+                    console.error("Error parsing response data: ", error);
+                    logMetricToAWS({
+                        LOGGING_API_URL,
+                        level: "ERROR",
+                        message: `Error parsing response data for Report Generation: ${error.message}`,
+                    });
+                }
+                console.log("DATA 4:", data_response_arr._embedded.members);
+            });
+        }
+        return open.apply(this, [method, url_arg, ...rest]);
+    };
+
+
+
+})();
