@@ -22,6 +22,19 @@
     // Empty array to store API response data
     var data_response_arr = [];
 
+    // Observer to detect when the page has loaded and to add the button
+    const observer = new MutationObserver(async(_, obs) => {
+        if (document.querySelector('#membersTable')) {
+
+            console.log("waiting for data...");
+            const data_response = await wait_for_data();
+            console.log("received data", data_response);
+
+            addColumn(data_response_arr);
+            obs.disconnect();
+        }
+    });
+
     // Function to add the date selection buttons
     function addColumn(data) {
         // Select the target element where buttons will be added
@@ -29,11 +42,13 @@
 
         if (table) {
             // Create the table header element
-            createTableHeader();
+            if (!document.querySelector("#membersTable > thead > tr > th:nth-child(7)")) {
+                createTableHeader();
+            }
 
             // add dates
-            console.log("ADD COLUMN SECTION:");
-            for (let i=0; i<10;i++) {
+            console.log("ADD COLUMN SECTION:", data_response_arr._embedded.members.length);
+            for (let i=0; i<data_response_arr._embedded.members.length;i++) {
                 let std_date = createdAtDateToStdDate(new Date(data_response_arr._embedded.members[i].createdAt));
 
                 createTableBody(std_date, (i+1));
@@ -41,6 +56,11 @@
             }
 
             editTableProperties();
+
+            observer.observe(document, {
+                childList: true,
+                subtree: true
+            });
         }
 
         function createTableHeader() {
@@ -126,20 +146,6 @@
         return data_response_arr;
     }
 
-    // Observer to detect when the page has loaded and to add the button
-
-    const observer = new MutationObserver(async(_, obs) => {
-        if (document.querySelector('#membersTable')) {
-
-            console.log("waiting for data...");
-            const data_response = await wait_for_data();
-            console.log("received data", data_response);
-
-            addColumn(data_response_arr);
-            obs.disconnect();
-        }
-    });
-
     // Start observing the document for changes in the DOM
     observer.observe(document, {
         childList: true,
@@ -151,7 +157,7 @@
     const open = window.XMLHttpRequest.prototype.open;
     window.XMLHttpRequest.prototype.open = function(method, url_arg, ...rest) {
         /*
-        if (!document.querySelector("#report-export-button")) {
+        if (!document.querySelector("#membersTable > tbody > tr:nth-child(1) > td:nth-child(7)")) {
             observer.observe(document, {
                 childList: true,
                 subtree: true
@@ -159,7 +165,7 @@
         }
         */
 
-        if (url_arg.includes(TARGET_URL)) {
+        if (url_arg.startsWith(TARGET_URL)) {
             this.addEventListener("load", function() {
                 try {
                     data_response_arr = JSON.parse(this.responseText);
