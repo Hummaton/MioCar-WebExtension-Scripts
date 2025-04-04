@@ -6,7 +6,7 @@
 // @match        https://admin.share.car/reports
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=share.car
 // @grant        none
-// @require      https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/report_dev/utilities.js
+// @require      https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/main/utilities.js
 // @require      https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js
 // @grant        none
 // ==/UserScript==
@@ -94,6 +94,37 @@
         return member_bookings;
     }
 
+    function sanitizeBookingData(data_arr) {
+
+        const fieldsToKeep = [
+            "status",
+            "createdAt",
+            "pickUpDatetime",
+            "dropOffDatetime",
+            "vehicleMake",
+            "vehicleModel",
+            "vehiclePlate",
+            "stationName",
+            "totalRevenue",
+            "type"
+        ];
+
+        for (let i = 0; i < data_arr._embedded.items.length; i++) {
+            const original = data_arr._embedded.items[i];
+            const cleaned = {};
+
+            for (const field of fieldsToKeep) {
+                if (field in original) {
+                    cleaned[field] = original[field];
+                }
+            }
+            data_arr._embedded.items[i] = cleaned;  
+        }
+
+        return data_arr._embedded.items;
+        
+    }
+
     function addButton() {
         const rowDiv = document.querySelector("body > sc-app-root > sc-app-root > div:nth-child(2) > section > div > div > div:nth-child(1) > main > ng-component > div > section > header > div > div.col-md-4.icon-links");
 
@@ -162,46 +193,10 @@
             this.addEventListener("load", function() {
                 try {
                     data_response_arr = JSON.parse(this.responseText);
+                    cleaned_bookings_arr = sanitizeBookingData(data_response_arr);
+                    console.log("Response data:", data_response_arr);
+                    console.log("Cleaned booking data:", cleaned_bookings_arr);
 
-
-                    const response = data_response_arr.response;           
-                    const embedded = response?._embedded;                  
-                    const bookings = embedded?.items || [];
-
-                    const fieldsToKeep = [
-                        "status",
-                        "createdAt",
-                        "pickUpDatetime",
-                        "dropOffDatetime",
-                        "vehicleMake",
-                        "vehicleModel",
-                        "vehiclePlate",
-                        "stationName",
-                        "totalRevenue",
-                        "type"
-                    ];
-
-                    for (let i = 0; i < bookings.length; i++) {
-                        const original = bookings[i];
-                        const cleaned = {};
-                    
-                        for (const field of fieldsToKeep) {
-                            if (field in original) {
-                                let value = original[field];
-                           
-                                if (field === "status") {
-                                    value = value === "Finished" ? 1 : 0;
-                                }
-                                cleaned[field] = value;
-                            }
-                        }
-                        bookings[i] = cleaned;
-                    }
-
-                    console.log("Cleaned booking data:", data_response_arr);                       
-                    
-
-                    
                 } catch (error) {
                     console.error("Error parsing response data: ", error);
                     logErrorToAWS(LOGGING_API_URL, "Error parsing response data", error.message);
