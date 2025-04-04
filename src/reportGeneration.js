@@ -124,7 +124,6 @@
             const today = new Date();
             const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
 
-            // TODO: FIX
             const payload = [
                 lastDayOfMonth, 
                 items[i].memberEmail, 
@@ -133,12 +132,12 @@
                 program_location,
                 external_data_reference, 
                 "", "", "", "", // Survey Sent, Follow Up Email, Survey Complete, Applied Promo Code
-                requested_duration.toFixed(2), 
-                actual_duration.toFixed(2), 
-                items[i].tripDistance,
+                Number(requested_duration.toFixed(2)), 
+                Number(actual_duration.toFixed(2)), 
+                Number(items[i].tripDistance),
                 items[i].vehiclePlate, 
                 items[i].stationName, 
-                items[i].totalRevenue, 
+                Number(items[i].totalRevenue), 
                 items[i].type, 
                 "" // Notes
             ];
