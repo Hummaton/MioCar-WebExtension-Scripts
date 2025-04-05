@@ -23,15 +23,11 @@
     var data_response_arr = [];
 
     // Observer to detect when the page has loaded and to add the button
-    const observer = new MutationObserver(async(_, obs) => {
-        if (document.querySelector('#membersTable')) {
-
-            console.log("waiting for data...");
-            const data_response = await wait_for_data();
-            console.log("received data", data_response);
-
+    const observer = new MutationObserver((_, obs) => {
+        console.log("Mutation detected");
+        if (document.querySelector('#membersTable') &&
+            !document.querySelector("#membersTable > tbody > tr:nth-child(1) > td:nth-child(7)")) {
             addColumn(data_response_arr);
-            obs.disconnect();
         }
     });
 
@@ -52,15 +48,9 @@
                 let std_date = createdAtDateToStdDate(new Date(data_response_arr._embedded.members[i].createdAt));
 
                 createTableBody(std_date, (i+1));
-                //createTableBody("Test Date "+(i+1), (i+1));
             }
 
             editTableProperties();
-
-            observer.observe(document, {
-                childList: true,
-                subtree: true
-            });
         }
 
         function createTableHeader() {
@@ -81,7 +71,7 @@
 
             // Create span for ascending sort
             const sortAscSpan = document.createElement('span');
-            sortAscSpan.className = 'sort-asc active';
+            sortAscSpan.className = 'sort-asc';
             const ascIcon = document.createElement('i');
             ascIcon.className = 'fa fa-angle-up';
             ascIcon.setAttribute('aria-hidden', 'true');
@@ -94,6 +84,34 @@
             descIcon.className = 'fa fa-angle-down';
             descIcon.setAttribute('aria-hidden', 'true');
             sortDescSpan.appendChild(descIcon);
+
+            // Ascending sort OnClick event listener
+            sortAscSpan.addEventListener("click", function () {
+                // create new member list with newest to oldest start dates if not already selected
+                if (!sortAscSpan.classList.contains("active")) {
+                    sortAscSpan.classList.add("active");
+                    sortDescSpan.classList.remove("active");
+
+                    // TODO:
+                    // clear members page and add loading screen
+                    // call for data ordered correctly
+                    // load member page
+                }
+            });
+
+            // Descending sort OnClick event listener
+            sortDescSpan.addEventListener("click", function () {
+                // create new member list with oldest to newest start dates if not already selected
+                if (!sortDescSpan.classList.contains("active")) {
+                    sortDescSpan.classList.add("active");
+                    sortAscSpan.classList.remove("active");
+
+                    // TODO:
+                    // clear members page and add loading screen
+                    // call for data ordered correctly
+                    // load member page
+                }
+            });
 
             // Append the sort asc and desc to the sort-options div
             sortOptionsDiv.appendChild(sortAscSpan);
@@ -139,13 +157,6 @@
 
     /*************         Main Function     *************/
 
-    async function wait_for_data() {
-        while (!data_response_arr || data_response_arr.length === 0) {
-            await new Promise(resolve => setTimeout(resolve, 100));
-        }
-        return data_response_arr;
-    }
-
     // Start observing the document for changes in the DOM
     observer.observe(document, {
         childList: true,
@@ -156,15 +167,6 @@
     // Intercept API call to get booking data
     const open = window.XMLHttpRequest.prototype.open;
     window.XMLHttpRequest.prototype.open = function(method, url_arg, ...rest) {
-        /*
-        if (!document.querySelector("#membersTable > tbody > tr:nth-child(1) > td:nth-child(7)")) {
-            observer.observe(document, {
-                childList: true,
-                subtree: true
-            });
-        }
-        */
-
         if (url_arg.startsWith(TARGET_URL)) {
             this.addEventListener("load", function() {
                 try {
