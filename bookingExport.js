@@ -184,12 +184,18 @@
                     for (let i = 0; i < bookings.length; i++) {
                         const original = bookings[i];
                         const cleaned = {};
+                    
                         for (const field of fieldsToKeep) {
                             if (field in original) {
-                                cleaned[field] = original[field];
+                                let value = original[field];
+                           
+                                if (field === "status") {
+                                    value = value === "Finished" ? 1 : 0;
+                                }
+                                cleaned[field] = value;
                             }
                         }
-                        bookings[i] = cleaned;  
+                        bookings[i] = cleaned;
                     }
 
                     console.log("Cleaned booking data:", data_response_arr);                       
