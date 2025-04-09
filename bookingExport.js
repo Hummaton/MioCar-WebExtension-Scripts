@@ -94,36 +94,54 @@
         return member_bookings;
     }
 
-    function sanitizeBookingData(data_arr) {
-
+    // This function sanitizes and compress the booking data to a string for the LLM 
+    function stringifyBookings(bookings) {
         const fieldsToKeep = [
-            "status",
-            "createdAt",
-            "pickUpDatetime",
-            "dropOffDatetime",
-            "vehicleMake",
-            "vehicleModel",
-            "vehiclePlate",
-            "stationName",
-            "totalRevenue",
-            "type"
+          "status",
+          "createdAt",
+          "pickUpDatetime",
+          "dropOffDatetime",
+          "vehicleMake",
+          "vehiclePlate",
+          "stationName",
+          "type",
+          "tripDistance",
+          "totalRevenue",
         ];
-
-        for (let i = 0; i < data_arr._embedded.items.length; i++) {
-            const original = data_arr._embedded.items[i];
-            const cleaned = {};
-
-            for (const field of fieldsToKeep) {
-                if (field in original) {
-                    cleaned[field] = original[field];
-                }
-            }
-            data_arr._embedded.items[i] = cleaned;  
-        }
-
-        return data_arr._embedded.items;
+      
+        const formatDate = iso => {
+            const d = new Date(iso);
+            const pad = n => String(n).padStart(2, '0');
+            return `${d.getMonth() + 1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+          };
         
-    }
+          const formatCreated = iso => {
+            const d = new Date(iso);
+            return `${d.getMonth() + 1}/${d.getDate()}`;
+          };
+        
+          return bookings.map(original => {
+            const entry = {};
+            for (const field of fieldsToKeep) {
+              if (field in original) {
+                entry[field] = original[field];
+              }
+            }
+        
+            const statusInitial = entry.status?.[0].toUpperCase() || '?';
+            const station = entry.stationName || 'Unknown Station';
+            const pickup = formatDate(entry.pickUpDatetime);
+            const dropoff = formatDate(entry.dropOffDatetime);
+            const make = entry.vehicleMake || 'Unknown Make';
+            const plate = entry.vehiclePlate?.split(' ')[0] || 'Unknown Plate';
+            const type = entry.type || 'Unknown Type';
+            const created = formatCreated(entry.createdAt);
+            const revenue = entry.totalRevenue || 0;
+            const distance = entry.tripDistance || 0;
+        
+            return `[${statusInitial}] ${station} | Created: ${created}, ${pickup} → ${dropoff} | ${make} | ${plate} | ${type} | $${revenue} | ${distance} mi`;
+          }).join('\n');
+    }    
 
     function addButton() {
         const rowDiv = document.querySelector("body > sc-app-root > sc-app-root > div:nth-child(2) > section > div > div > div:nth-child(1) > main > ng-component > div > section > header > div > div.col-md-4.icon-links");
@@ -192,10 +210,10 @@
         if (url_arg.includes(TARGET_URL)) {
             this.addEventListener("load", function() {
                 try {
-                    data_response_arr = JSON.parse(this.responseText);
-                    cleaned_bookings_arr = sanitizeBookingData(data_response_arr);
+                    let data_response_arr = JSON.parse(this.responseText);
+                    let llm_data = stringifyBookings(data_response_arr._embedded.items);
                     console.log("Response data:", data_response_arr);
-                    console.log("Cleaned booking data:", cleaned_bookings_arr);
+                    console.log("Cleaned booking data:\n", llm_data);
 
                 } catch (error) {
                     console.error("Error parsing response data: ", error);
