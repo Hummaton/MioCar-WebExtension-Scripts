@@ -33,26 +33,6 @@
 
     // Function to add the date selection buttons
     function addColumn(data) {
-        // Select the target element where buttons will be added
-        var table = document.querySelector('#membersTable');
-
-        if (table) {
-            // Create the table header element
-            if (!document.querySelector("#membersTable > thead > tr > th:nth-child(7)")) {
-                createTableHeader();
-            }
-
-            // add dates
-            console.log("ADD COLUMN SECTION:", data_response_arr._embedded.members.length);
-            for (let i=0; i<data_response_arr._embedded.members.length;i++) {
-                let std_date = createdAtDateToStdDate(new Date(data_response_arr._embedded.members[i].createdAt));
-
-                createTableBody(std_date, (i+1));
-            }
-
-            editTableProperties();
-        }
-
         function createTableHeader() {
             const tableHead = document.createElement('th');
             tableHead.scope = 'col';
@@ -85,31 +65,40 @@
             descIcon.setAttribute('aria-hidden', 'true');
             sortDescSpan.appendChild(descIcon);
 
-            // Ascending sort OnClick event listener
+            // Ascending sort OnClick event listener (up arrow)
             sortAscSpan.addEventListener("click", function () {
                 // create new member list with newest to oldest start dates if not already selected
                 if (!sortAscSpan.classList.contains("active")) {
                     sortAscSpan.classList.add("active");
                     sortDescSpan.classList.remove("active");
 
-                    // TODO:
-                    // clear members page and add loading screen
-                    // call for data ordered correctly
-                    // load member page
+                    let currentURL = window.location.href;
+                    console.log("BEFORE:", currentURL);
+                    let result = currentURL.toLowerCase().includes("sortDirection=desc".toLowerCase());
+                    if (!result) {
+                        currentURL = currentURL.slice(0, -3) + "desc";
+                        console.log("AFTER:", currentURL);
+                        window.location.href = currentURL;
+                    }
+
                 }
             });
 
-            // Descending sort OnClick event listener
+            // Descending sort OnClick event listener (down arrow)
             sortDescSpan.addEventListener("click", function () {
                 // create new member list with oldest to newest start dates if not already selected
                 if (!sortDescSpan.classList.contains("active")) {
                     sortDescSpan.classList.add("active");
                     sortAscSpan.classList.remove("active");
 
-                    // TODO:
-                    // clear members page and add loading screen
-                    // call for data ordered correctly
-                    // load member page
+                    let currentURL = window.location.href;
+                    console.log("BEFORE:", currentURL);
+                    let result = currentURL.toLowerCase().includes("sortDirection=asc".toLowerCase());
+                    if (!result) {
+                        currentURL = currentURL.slice(0, -4) + "asc";
+                        console.log("AFTER:", currentURL);
+                        window.location.href = currentURL;
+                    }
                 }
             });
 
@@ -153,6 +142,42 @@
             // Shorten the email column
             tableElements[3].width = "25%";
         }
+
+
+
+        // Select the target element where buttons will be added
+        var table = document.querySelector('#membersTable');
+
+        if (table) {
+            // Create the table header element
+            if (!document.querySelector("#membersTable > thead > tr > th:nth-child(7)")) {
+                createTableHeader();
+            }
+
+            // darken arrow based on chosen sort
+            let currentURL = window.location.href;
+            let result = currentURL.toLowerCase().includes("sortDirection=desc".toLowerCase());
+            const sortAsc = document.querySelector("#membersTable > thead > tr > th:nth-child(7) > sc-collection-sort > div > span.sort-asc");
+            const sortDesc = document.querySelector("#membersTable > thead > tr > th:nth-child(7) > sc-collection-sort > div > span.sort-desc");
+            if (result) {
+                sortAsc.classList.add("active");
+                sortDesc.classList.remove("active");
+            } else {
+                sortDesc.classList.add("active");
+                sortAsc.classList.remove("active");
+            }
+
+            // add dates
+            console.log("ADD COLUMN SECTION:", data_response_arr._embedded.members.length);
+            for (let i=0; i<data_response_arr._embedded.members.length;i++) {
+                let std_date = createdAtDateToStdDate(new Date(data_response_arr._embedded.members[i].createdAt));
+
+                createTableBody(std_date, (i+1));
+            }
+
+            editTableProperties();
+        }
+
     }
 
     /*************         Main Function     *************/
