@@ -147,7 +147,8 @@
     console.log("[MVRCheck] Current URL:", currentUrl);
 
     // -------- LOGIN PAGE --------
-    if (currentUrl.includes("/login")) {
+    // Check if the URL contains "/login" and if the session state is "init". If we are in a script state, we know this page is being automated
+    if (currentUrl.includes("/login") && sessionStorage.getItem("script_state") === "init") {
             // Login
             const usernameField = document.querySelector("#l-name");
             const passwordField = document.querySelector("#l-pass");
@@ -170,13 +171,11 @@
                 history.replaceState(null, "", window.location.pathname);
 
                 loginButton.click();
-
-                // TODO: HANDLE LOGIN ERROR
             }        
     }
 
     // -------- ORDER PAGE --------
-    else if (currentUrl.includes("is/app")) {
+    else if (currentUrl.includes("is/app") && sessionStorage.getItem("script_state") === "init") {
         console.log("[MVRCheck] On dashboard page.");
 
         const stored = sessionStorage.getItem("mvr_form_input");
