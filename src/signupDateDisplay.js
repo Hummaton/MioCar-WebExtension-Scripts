@@ -24,7 +24,6 @@
 
     // Observer to detect when the page has loaded and to add the button
     const observer = new MutationObserver((_, obs) => {
-        console.log("Mutation detected");
         if (document.querySelector('#membersTable') &&
             !document.querySelector("#membersTable > tbody > tr:nth-child(1) > td:nth-child(7)")) {
             addColumn(data_response_arr);
@@ -73,14 +72,11 @@
                     sortDescSpan.classList.remove("active");
 
                     let currentURL = window.location.href;
-                    console.log("BEFORE:", currentURL);
                     let result = currentURL.toLowerCase().includes("sortDirection=desc".toLowerCase());
                     if (!result) {
                         currentURL = currentURL.slice(0, -3) + "desc";
-                        console.log("AFTER:", currentURL);
                         window.location.href = currentURL;
                     }
-
                 }
             });
 
@@ -92,11 +88,9 @@
                     sortAscSpan.classList.remove("active");
 
                     let currentURL = window.location.href;
-                    console.log("BEFORE:", currentURL);
                     let result = currentURL.toLowerCase().includes("sortDirection=asc".toLowerCase());
                     if (!result) {
                         currentURL = currentURL.slice(0, -4) + "asc";
-                        console.log("AFTER:", currentURL);
                         window.location.href = currentURL;
                     }
                 }
@@ -168,9 +162,8 @@
             }
 
             // add dates
-            console.log("ADD COLUMN SECTION:", data_response_arr._embedded.members.length);
-            for (let i=0; i<data_response_arr._embedded.members.length;i++) {
-                let std_date = createdAtDateToStdDate(new Date(data_response_arr._embedded.members[i].createdAt));
+            for (let i=0; i<data._embedded.members.length;i++) {
+                let std_date = createdAtDateToStdDate(new Date(data._embedded.members[i].createdAt));
 
                 createTableBody(std_date, (i+1));
             }
@@ -188,7 +181,6 @@
         subtree: true
     });
 
-
     // Intercept API call to get booking data
     const open = window.XMLHttpRequest.prototype.open;
     window.XMLHttpRequest.prototype.open = function(method, url_arg, ...rest) {
@@ -205,7 +197,6 @@
                         message: `Error parsing response data for Report Generation: ${error.message}`,
                     });
                 }
-                console.log("DATA 4:", data_response_arr._embedded.members);
             });
         }
         return open.apply(this, [method, url_arg, ...rest]);
