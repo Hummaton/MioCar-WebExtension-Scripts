@@ -141,6 +141,7 @@
         
             return `[${statusInitial}] ${station} | Created: ${created}, ${pickup} → ${dropoff} | ${make} | ${plate} | ${type} | $${revenue} | ${distance} mi`;
           }).join('\n');
+          
     }    
 
     function addButton() {
