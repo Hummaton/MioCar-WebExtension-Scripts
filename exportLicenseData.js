@@ -29,7 +29,6 @@
     function extractInfo(username, password) {
         console.log("Extracting user information...");
         console.log("Username: ", username);
-        console.log("Password: ", password);
 
         // Helper function to safely extract text content from a selector
         function getText(selector, defaultValue = "N/A") {
@@ -90,29 +89,34 @@
 
         modal.className = 'modal-dialog';
         modal.style.position = 'fixed';
-        modal.style.top = '0';
-        modal.style.left = '0';
-        modal.style.width = '100vw';
-        modal.style.height = '60vh';
+        modal.style.top = '50%'; // Center vertically
+        modal.style.left = '50%'; // Center horizontally
+        modal.style.transform = 'translate(-50%, -50%)'; // Center the modal
+        modal.style.width = '90%';
+        modal.style.maxWidth = '400px';
+        modal.style.maxHeight = '90vh'; // Maximum height relative to viewport
         modal.style.display = 'flex';
-        modal.style.justifyContent = 'center';
-        modal.style.alignItems = 'center';
-        modal.style.zIndex = '9999'; // Ensure it is above the backdrop
+        modal.style.flexDirection = 'column';
+        modal.style.zIndex = '9999';
 
         const modalContent = document.createElement('div');
         modalContent.className = 'modal-content';
-        modalContent.style.width = '90%';
-        modalContent.style.maxWidth = '400px';
+        modalContent.style.width = '100%';
         modalContent.style.backgroundColor = 'white';
         modalContent.style.borderRadius = '5px';
-        modalContent.style.overflow = 'hidden';
+        modalContent.style.overflow = 'auto'; // Allow scrolling if content is too long
         modalContent.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.2)';
+        modalContent.style.display = 'flex';
+        modalContent.style.flexDirection = 'column';
 
         const modalHeader = document.createElement('div');
         modalHeader.className = 'modal-header';
         modalHeader.style.textAlign = 'center';
         modalHeader.style.padding = '15px';
         modalHeader.style.borderBottom = '1px solid #ddd';
+        modalHeader.style.position = 'sticky'; // Keep header visible
+        modalHeader.style.top = '0';
+        modalHeader.style.backgroundColor = 'white';
         modalHeader.innerHTML = `
             <h3 class="modal-title" style="margin: 0;">MVR Checker Credentials</h3>
             <a class="close-button" style="position: absolute; top: 10px; right: 15px; cursor: pointer;">
@@ -121,12 +125,14 @@
         `;
         modalHeader.querySelector('.close-button').onclick = () => {
             document.body.removeChild(modal);
-            document.body.removeChild(backdrop); // Remove the backdrop when modal is closed
+            document.body.removeChild(backdrop);
         };
 
         const modalBody = document.createElement('div');
         modalBody.className = 'modal-body';
         modalBody.style.padding = '20px';
+        modalBody.style.flexGrow = '1';
+        modalBody.style.overflow = 'auto';
         modalBody.innerHTML = `
             <div class="form-group" style="margin-bottom: 15px;">
             <label for="mvr-username" style="display: block; margin-bottom: 5px;">Username</label>
@@ -144,6 +150,9 @@
         modalFooter.style.justifyContent = 'space-between';
         modalFooter.style.padding = '10px 20px';
         modalFooter.style.borderTop = '1px solid #ddd';
+        modalFooter.style.position = 'sticky'; // Keep footer visible
+        modalFooter.style.bottom = '0';
+        modalFooter.style.backgroundColor = 'white';
         modalFooter.innerHTML = `
             <button id="mvr-submit" type="button" class="btn btn-success" style="padding: 10px 20px; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer;">Submit</button>
             <button id="mvr-cancel" type="button" class="btn btn-danger" style="padding: 10px 20px; background-color: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer;">Cancel</button>
@@ -151,7 +160,7 @@
 
         modalFooter.querySelector('#mvr-cancel').onclick = () => {
             document.body.removeChild(modal);
-            document.body.removeChild(backdrop); // Remove the backdrop when modal is closed
+            document.body.removeChild(backdrop);
         };
 
         modalContent.appendChild(modalHeader);
@@ -159,7 +168,6 @@
         modalContent.appendChild(modalFooter);
         modal.appendChild(modalContent);
         document.body.appendChild(modal);
-
     }
 
     // Function to add the recurring service booking options
