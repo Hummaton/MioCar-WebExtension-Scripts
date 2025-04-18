@@ -137,7 +137,7 @@
             sessionStorage.setItem("script_state", script_state);
 
             sessionStorage.setItem("mvr_form_input", JSON.stringify(mvr_form_input));
-            console.log("[MVRCheck] Decoded user data and saved to session storage:", data);
+            console.log("[MVRCheck] Decoded user data and saved to session storage");
 
         } catch (err) { 
             console.error("Failed to decode base64 from URL:", err);
