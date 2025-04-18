@@ -101,7 +101,14 @@
             }
 
             const requested_duration = Math.abs(new Date(items[i].dropOffDatetime) - new Date(items[i].pickUpDatetime)) / (1000 * 60 * 60);
-            const actual_duration = Math.ceil(Math.abs(new Date(items[i].tripDropOffDatetime) - new Date(items[i].tripPickUpDatetime)) / (1000 * 60 * 60) * 4) / 4;
+
+            const actual_start_date = new Date(items[i].tripPickUpDatetime);
+            const actual_end_date = new Date(items[i].tripDropOffDatetime);
+    
+            actual_start_date.setSeconds(0);
+            actual_end_date.setSeconds(0);
+    
+            const actual_duration = Math.ceil(Math.abs(actual_end_date - actual_start_date) / (1000 * 60 * 60) * 4) / 4;
 
             const start_date = new Date(items[i].pickUpDatetime);
             const end_date = new Date(items[i].dropOffDatetime);
@@ -117,7 +124,6 @@
             const today = new Date();
             const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
 
-            // TODO: FIX
             const payload = [
                 lastDayOfMonth, 
                 items[i].memberEmail, 
@@ -126,12 +132,12 @@
                 program_location,
                 external_data_reference, 
                 "", "", "", "", // Survey Sent, Follow Up Email, Survey Complete, Applied Promo Code
-                requested_duration.toFixed(2), 
-                actual_duration.toFixed(2), 
-                items[i].tripDistance,
+                Number(requested_duration.toFixed(2)), 
+                Number(actual_duration.toFixed(2)), 
+                Number(items[i].tripDistance),
                 items[i].vehiclePlate, 
                 items[i].stationName, 
-                items[i].totalRevenue, 
+                Number(items[i].totalRevenue), 
                 items[i].type, 
                 "" // Notes
             ];
