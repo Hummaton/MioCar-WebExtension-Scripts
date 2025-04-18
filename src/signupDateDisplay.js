@@ -181,20 +181,19 @@
         subtree: true
     });
 
-    // Intercept API call to get booking data
+    // Intercept API call to get Member data
     const open = window.XMLHttpRequest.prototype.open;
     window.XMLHttpRequest.prototype.open = function(method, url_arg, ...rest) {
         if (url_arg.startsWith(TARGET_URL)) {
             this.addEventListener("load", function() {
                 try {
                     data_response_arr = JSON.parse(this.responseText);
-                    // let formatted_date = stripData(data_response_arr); //TODO: Extract only the necessary data for the LLM
                 } catch (error) {
                     console.error("Error parsing response data: ", error);
                     logMetricToAWS({
                         LOGGING_API_URL,
                         level: "ERROR",
-                        message: `Error parsing response data for Report Generation: ${error.message}`,
+                        message: `Error parsing response data for Date Display: ${error.message}`,
                     });
                 }
             });
