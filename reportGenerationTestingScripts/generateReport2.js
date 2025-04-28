@@ -31,7 +31,7 @@ async function generateReport() {
   try {
     const logData = fs.readFileSync("./jsonBookings/inputText.txt", "utf-8");
     const response = await ollama.chat({
-      model: "gemma3:4b", 
+      model: "gemma3:12b", 
       messages: [
         {
           role: "user",
