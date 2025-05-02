@@ -4,9 +4,10 @@
 // @version      2025-04-30
 // @description  Display a signup date column in the members bookings table for deleting and a delete button
 // @author       You
-// @match        https://admin.share.car/communities/*/customers/members/*
+// @match        https://admin.share.car/communities/*/fleet/vehicles/*
 // @updateURL    https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/refs/heads/main/deleteMemberBookings.js
 // @downloadURL  https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/refs/heads/main/deleteMemberBookings.js
+// @require      https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/main/utilities.js
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=share.car
 // @grant        none
 // ==/UserScript==
@@ -15,19 +16,48 @@
     'use strict';
 
     /************* FILL IN FOR PRODUCTION SCRIPT  */
-    const TARGET_URL = ""; // Target API endpoint
+    var TARGET_URL = ""; // Target API endpoint
     const LOGGING_API_URL = ""; // Logging API endpoint
     /************* FILL IN FOR PRODUCTION SCRIPT  */
 
-    // Observer to detect when the page has loaded and to add the button
-    const observer = new MutationObserver((_, obs) => {
-        if (document.querySelector('#BookingTable') &&
-            !document.querySelector("#BookingTable > thead > tr > th:nth-child(1) > input[type=checkbox]")) {
-            console.log("HERE");
-            add_select_column();
-            add_delete_button();
+
+    /********** Progress Bar **********/
+    function createProgressBar() {
+
+        const check_availability_parent_div = document.querySelector("body > delete-booking-modal > div.modal.note-modal.fade.in > div > div > form > div.modal-footer");
+        const progress_bar_container = document.createElement('div');
+        progress_bar_container.className = 'progress-bar-container-booking-form';
+        progress_bar_container.style.width = '100%';
+        progress_bar_container.style.backgroundColor = '#f3f3f3';
+        progress_bar_container.style.borderRadius = '5px';
+        progress_bar_container.style.marginTop = '10px';
+
+        const progress_bar = document.createElement('div');
+        progress_bar.className = 'progress-bar-booking-form';
+        progress_bar.style.width = '0%';
+        progress_bar.style.height = '20px';
+        progress_bar.style.backgroundColor = '#4caf50';
+        progress_bar.style.borderRadius = '5px';
+
+        progress_bar_container.appendChild(progress_bar);
+        check_availability_parent_div.appendChild(progress_bar_container);
+    }
+
+    function incrementProgressBar(completed_intervals, total_intervals) {
+        const progress_bar = document.querySelector('.progress-bar-booking-form');
+        const progress_percentage = (completed_intervals / total_intervals) * 100;
+        progress_bar.style.width = `${progress_percentage}%`;
+    }
+
+    function removeProgressBar() {
+        const progress_bar_container = document.querySelector('.progress-bar-container-booking-form');
+
+        if (progress_bar_container) {
+            progress_bar_container.remove();
         }
-    });
+    }
+
+    /*********** Select Functionality **********/
 
     function toggle_all_select(source) {
         const allCheckboxes = document.querySelectorAll('.booking-select');
@@ -61,8 +91,23 @@
             const input_body = document.createElement("input");
             input_body.type = "checkbox";
             input_body.classList.add("booking-select");
+
             input_body.addEventListener('click', function() {
                 if (input_head.checked) input_head.checked = false;
+
+                // check if all rows are checked to update head checkbox
+                let all_checked = true;
+                const rows = booking_table_body.querySelectorAll("tr");
+                for (const tr of rows) {
+                    const checkbox = tr.querySelector("input[type='checkbox']");
+
+                    if (checkbox && !checkbox.checked) {
+                        all_checked = false;
+                        break;
+                    }
+                }
+
+                if (all_checked == true) input_head.checked = true;
             });
 
             td_body.appendChild(input_body);
@@ -71,10 +116,63 @@
 
     }
 
+    /****** DELETE FUNCTIONALITY ******/
+
+    async function delete_bookings(bookings) {
+        // API endpoint to concatenate: */actions/cancel
+        const delete_button = document.querySelector('#confirm-delete-btn');
+        if (delete_button) {
+            delete_button.remove();
+        }
+
+        createProgressBar();
+        const start = performance.now();
+        for (let i=0; i < bookings.length; i++) {
+            let booking_id = bookings[i][1];
+            let endpoint_ending = booking_id + "/actions/cancel";
+
+            // update target URL
+            let temp_target_url = TARGET_URL + endpoint_ending;
+
+            var response;
+            let requestHeaders = getPostHeader(LOGGING_API_URL);
+            console.log("SENDING POST TO DELETE", booking_id);
+            // Send POST to delete bookings
+            try {
+                response = await fetch(temp_target_url, {
+                    method: 'POST',
+                    headers: requestHeaders
+                });
+
+                //Log the booking using AWS Cloudwatch (future development)
+            } catch (error) {
+                console.error('Error: Bad Booking Delete POST request:', error);
+                logMetricToAWS(cloudwatch_url, 'Error: Booking Delete API call: ' + error);
+            }
+            incrementProgressBar(i+1, bookings.length);
+        }
+        const end = performance.now();
+        let time_to_delete = (end-start) / 1000; // in seconds
+        console.log(`Deleting ${bookings.length} bookings took ${time_to_delete} seconds.`);
+        removeProgressBar();
+
+        // Change Booking Message
+        const modal_center_text = document.querySelector("body > delete-booking-modal > div.modal.note-modal.fade.in > div > div > form > div.modal-body > div > div > p");
+        modal_center_text.innerText = `${bookings.length} booking(s) were deleted!`;
+
+        // Remove modal after 3 seconds
+        setTimeout(() => {
+            document.querySelector("body > delete-booking-modal").remove();
+            // Refresh page
+            window.location.reload();
+        }, 2000); // 2000 milliseconds = 2 seconds
+
+    }
+
     function open_delete_window() {
         // Get data and count number of bookings
         var selectedBookingsCount = 0;
-        const checkedRows = [];
+        const bookings_to_delete = [];
         const booking_table_body = document.querySelector("#BookingTable > tbody");
         const rows = booking_table_body.querySelectorAll("tr");
 
@@ -88,37 +186,53 @@
                     // Get data from each column
                     rowData.push(td.innerText);
                 });
-                checkedRows.push(rowData);
+                bookings_to_delete.push(rowData);
             }
         });
-        console.log(checkedRows);
+        console.log(bookings_to_delete);
 
+        // Create delete pop up modal
         const delete_modal = document.createElement('delete-booking-modal');
         // copied form HTML from service booking form
         delete_modal.innerHTML = `
           <div role="dialog" index="0" animate="animate" class="modal note-modal fade in" style="display: block;">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <form name="deleteBookings" class="delete-booking-form">
-          <div class="modal-header">
-            <h3 class="modal-title">Delete Selected Bookings</h3>
-            <a class="close-button" id="close-modal-btn"><i aria-hidden="true" class="fa fa-times"></i></a>
-          </div>
-          <div class="modal-body" style="overflow: visible;">
-               <div class="row"><div class="col-md-12">
-                   <p style="text-align: center; font-size: 1.5em;">Do you want to delete ${selectedBookingsCount} bookings?</p>
-               </div></div>
-          </div>
-          <div class="modal-footer">
-               <button type="button" id="confirm-delete-btn" class="btn btn-danger ng-star-inserted"> Delete </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-  <div class="modal-backdrop fade in" id="modal-backdrop" style="z-index: 1040;" aria-hidden="true"></div>
-  `;
+            <div class="modal-dialog">
+            <div class="modal-content">
+                <form name="deleteBookings" class="delete-booking-form">
+                <div class="modal-header">
+                    <h3 class="modal-title">Delete Selected Bookings</h3>
+                    <a class="close-button" id="close-modal-btn"><i aria-hidden="true" class="fa fa-times"></i></a>
+                </div>
+                <div class="modal-body" style="overflow: visible;">
+                    <div class="row"><div class="col-md-12">
+                        <p style="text-align: center; font-size: 1.5em;">Do you want to delete the following bookings?</p>
+                    </div></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="confirm-delete-btn" class="btn btn-danger ng-star-inserted"> Delete </button>
+                </div>
+                </form>
+            </div>
+            </div>
+        </div>
+        <div class="modal-backdrop fade in" id="modal-backdrop" style="z-index: 1040;" aria-hidden="true"></div>
+        `;
         document.body.appendChild(delete_modal);
+
+        // Add booking information
+        const delete_bookings_div = document.querySelector("body > delete-booking-modal > div.modal.note-modal.fade.in > div > div > form > div.modal-body > div > div");
+        for (let i=0; i<bookings_to_delete.length; i++) {
+            const delete_booking_info = document.createElement("p");
+            delete_booking_info.style.textAlign = 'center';
+            delete_booking_info.style.fontSize = '1.3em';
+
+            let booking_type = bookings_to_delete[i][2];
+            let date_time = bookings_to_delete[i][3];
+
+            delete_booking_info.innerText = `${booking_type} booking on ${date_time}`;
+
+            delete_bookings_div.appendChild(delete_booking_info);
+        }
 
         // Close modal via close button
         delete_modal.querySelector('#close-modal-btn').addEventListener('click', () => {
@@ -134,26 +248,46 @@
         delete_modal.querySelector('#confirm-delete-btn').addEventListener('click', () => {
             console.log("DELETING SELECTED BOOKINGS");
             // code for deleting bookings
+            delete_bookings(bookings_to_delete);
         });
     }
 
     function add_delete_button() {
-        const booking_page_actions = document.querySelector("body > sc-app-root > sc-app-root > div:nth-child(2) > section > div > div > div:nth-child(1) > main > ng-component > form > div > section:nth-child(5) > header > div > div.col-md-8 > div");
+        const booking_page_header = document.querySelector("body > sc-app-root > sc-app-root > div:nth-child(2) > section > div > div > div:nth-child(1) > main > ng-component > div > section:nth-child(7) > section > sc-booking-filters > form");
+
+        const delete_button_div = document.createElement("div");
+        delete_button_div.classList.add("form-group", "ng-star-inserted");
+        delete_button_div.style.paddingTop = '35px';
+
 
         // Create booking delete button
         const booking_delete_button = document.createElement("button");
         booking_delete_button.textContent = "Delete Selected Bookings";
+        booking_delete_button.id = "booking-delete-button";
         booking_delete_button.classList.add("btn", "btn-danger", "ng-star-inserted");
+
         booking_delete_button.addEventListener('click', function() {
             console.log("OPENING DELETE POPUP");
             open_delete_window();
         });
 
-        booking_page_actions.appendChild(booking_delete_button);
+        delete_button_div.appendChild(booking_delete_button);
+
+        booking_page_header.insertBefore(delete_button_div, booking_page_header.lastElementChild);
     }
 
 
     /*************         Main Function     *************/
+
+    // Observer to detect when the page has loaded and to add the button
+    const observer = new MutationObserver((_, obs) => {
+        if (document.querySelector('#BookingTable') &&
+            !document.querySelector("#BookingTable > thead > tr > th:nth-child(1) > input[type=checkbox]")) {
+            console.log("HERE");
+            add_select_column();
+            add_delete_button();
+        }
+    });
 
     // Start observing the document for changes in the DOM
     observer.observe(document, {
