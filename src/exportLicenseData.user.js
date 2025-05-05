@@ -1,19 +1,19 @@
 // ==UserScript==
 // @name         Export License Data
 // @namespace    http://tampermonkey.net/
-// @version      2025-01-25
-// @description  Added as a test script to export license data and will be used as a template for helping with autofilling MVR Checker form
-// @author       You
+// @version      2025-05-04
 // @match        https://admin.share.car/communities/*/customers/members*
-// @match        <FILL IN URL HERE>
+// @match        https://mvrcheck.instascreen.net/is/app
+// @updateURL    https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/refs/heads/main/src/exportLicenseData.user.js
+// @downloadURL  https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/refs/heads/main/src/exportLicenseData.user.js
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=share.car
 // @grant        none
 // ==/UserScript==
 
 (function() {
     'use strict';
-
-    const MVRCHECKURL = "FILL IN URL HERE";
+    
+    const MVRCHECKURL = "https://mvrcheck.instascreen.net/is/app"; // Updated URL
 
     function openMVRCheckWindow(memberInfo) {
         // Convert object to base64    

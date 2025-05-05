@@ -1,13 +1,13 @@
 // ==UserScript==
 // @name         Recurring Booking Frontend
 // @namespace    http://tampermonkey.net/
-// @version      2025-01-25
+// @version      2025-05-04
 // @description  Add recurring booking button
 // @match        https://admin.share.car/communities/*/fleet/vehicles/*
 // @grant        none
 // @require      https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/main/utilities.js
-// @updateURL    https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/refs/heads/main/serviceBookingRepeat.js
-// @downloadURL  https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/refs/heads/main/serviceBookingRepeat.js
+// @updateURL    https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/refs/heads/main/src/recurringBookingFrontend.user.js
+// @downloadURL  https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/refs/heads/main/src/recurringBookingFrontend.user.js
 // ==/UserScript==
 (function () {
     'use strict';

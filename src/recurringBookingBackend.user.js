@@ -1,10 +1,10 @@
 // ==UserScript==
 // @name         Recurring Booking Backend
 // @namespace    http://tampermonkey.net/
-// @version      2025-01-21
-// @description  try to take over the world!
-// @author       You
+// @version      2025-05-04
 // @match        https://admin.share.car/communities/*/fleet/vehicles/*
+// @updateURL    https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/refs/heads/main/src/recurringBookingBackend.user.js
+// @downloadURL  https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/refs/heads/main/src/recurringBookingBackend.user.js
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=share.car
 // @require      https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/main/utilities.js
 // @grant        none

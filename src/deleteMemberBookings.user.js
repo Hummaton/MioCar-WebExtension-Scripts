@@ -1,12 +1,10 @@
 // ==UserScript==
 // @name         Delete Member Bookings
 // @namespace    http://tampermonkey.net/
-// @version      2025-04-30
-// @description  Display a signup date column in the members bookings table for deleting and a delete button
-// @author       You
+// @version      2025-05-04
 // @match        https://admin.share.car/communities/*/fleet/vehicles/*
-// @updateURL    https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/refs/heads/main/deleteMemberBookings.js
-// @downloadURL  https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/refs/heads/main/deleteMemberBookings.js
+// @updateURL    https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/refs/heads/main/src/deleteMemberBookings.user.js
+// @downloadURL  https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/refs/heads/main/src/deleteMemberBookings.user.js
 // @require      https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/main/utilities.js
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=share.car
 // @grant        none
