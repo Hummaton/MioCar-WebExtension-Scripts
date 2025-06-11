@@ -3,14 +3,17 @@
 // @namespace    http://tampermonkey.net/
 // @version      1.1
 // @description  Listens for user info and fills login
-// @match        <FILL IN URL HERE>
+// @match        https://mvrcheck.instascreen.net/*
+// @updateURL    https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/refs/heads/main/src/mvrChecker.user.js
+// @downloadURL  https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/refs/heads/main/src/mvrChecker.user.js
+
 // @grant        none
 // ==/UserScript==
 
 (function () {
     'use strict';
 
-    const ORDERFORMURL = "Fill in URL HERE";
+    const ORDERFORMURL = "https://mvrcheck.instascreen.net/order/new.taz";
 
     // Function to process state data
     function process_state_data(state) {
