@@ -151,7 +151,8 @@
             case BAD_REQUEST:
                 error_string = "Bad Request for recurring booking script";
                 break;
-            case (INVALID_TOKEN || FORBIDDEN):
+            case INVALID_TOKEN:
+            case FORBIDDEN:
                 error_string = "Invalid Token or Forbidden Access for recurring booking script";
                 /* Since we plan to retrieve the token from the browser's localStorage right before making the API call,
                 we can assume that we are getting the most up to date key. If the key is invalid, the user should refresh the page" */
