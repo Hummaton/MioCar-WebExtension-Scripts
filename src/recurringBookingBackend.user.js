@@ -48,7 +48,6 @@
     /************* FILL IN FOR PRODUCTION SCRIPT  */
     const url = API_ENDPOINT;
     const referer = POST_HEADERS_REFERER;
-    const cloudwatch_url = CLOUDWATCH_ENDPOINT;
     /************* FILL IN FOR PRODUCTION SCRIPT  */
 
     function repeatIntervalToInt(repeat_interval) {
@@ -172,14 +171,15 @@
                 if (DELAY_AMMOUNT > 3000) {
                     alert('API issue detected, please try again later. Developers have been notified');
                     error_string += "\nDelay is too long, stopping requests";
-                    logMetricToAWS({
-                        LOGGING_API_URL: cloudwatch_url,
-                        level: "ERROR",
-                        message: `Delay too long for recurring booking script\n Delay: ${DELAY_AMMOUNT}`,
-                        feature: "Recurring Booking",
-                        api_request_param: body,
-                        api_response_param: response,
-                    })
+        sendLog({
+            level: "ERROR",
+            message: `Delay too long for recurring booking script\n Delay: ${DELAY_AMMOUNT}`,
+            feature: "Recurring Booking",
+            details: {
+                apiRequest: body,
+                apiResponse: response
+            }
+        })
                     return;
                 }
                 break;
@@ -200,13 +200,14 @@
         }
 
         //API Call to AWS Cloudwatch to log the error 
-        logMetricToAWS({
-            LOGGING_API_URL: cloudwatch_url,
+        sendLog({
             level: "ERROR",
             message: error_string,
             feature: "Recurring Booking",
-            api_request_param: body,
-            api_response_param: response
+            details: {
+                apiRequest: body,
+                apiResponse: response
+            }
         });
     }
 
@@ -361,12 +362,13 @@
                 });
             } catch (error) {
                 console.error('Error making POST request:', error);
-                logMetricToAWS({
-                    LOGGING_API_URL: cloudwatch_url,
+                sendLog({
                     level: "ERROR",
                     message: `Error checking availability for service booking: ${error.message}`,
                     feature: "Recurring Booking",
-                    api_request_param: requestBody,
+                    details: {
+                        apiRequest: requestBody
+                    }
                 });
             }
 
@@ -482,12 +484,13 @@
                 });
             } catch (error) {
                 console.error('Error: Bad Booking POST request:', error);
-                logMetricToAWS({
-                    LOGGING_API_URL: cloudwatch_url,
+                sendLog({
                     level: "ERROR",
                     message: `Error: Bad Booking POST request: ${error.message}`,
                     feature: "Recurring Booking",
-                    api_request_param: requestBody
+                    details: {
+                        apiRequest: requestBody
+                    }
                 });
             }
 
@@ -518,16 +521,16 @@
             var valid_purpose = valid_date_payloads[i].purpose;
 
             only_valid_dates_msg = only_valid_dates_msg + valid_date + "<br />";
-            // Safe to say that the booking on its own takes 50 seconds to create
-            logMetricToAWS({
-                LOGGING_API_URL: cloudwatch_url,
-                level: "SUCCESS",
-                message: "Service Booking created",
-                time_saved: 50,
-                feature: "Recurring Booking",
-                api_request_param: valid_date_payloads[i],     
-            });
         }
+
+        sendLog({
+            level: "SUCCESS",
+            message: "Recurring bookings created",
+            feature: "Recurring Booking",
+            details: {
+                bookingsCreated: valid_date_payloads.length
+            }
+        });
 
         createGreenMessage(only_valid_dates_msg);
 
