@@ -15,7 +15,6 @@
 
     /************* FILL IN FOR PRODUCTION SCRIPT  */
     var TARGET_URL = ""; // Target API endpoint
-    const LOGGING_API_URL = ""; // Logging API endpoint
     /************* FILL IN FOR PRODUCTION SCRIPT  */
 
 
@@ -133,7 +132,7 @@
             let temp_target_url = TARGET_URL + endpoint_ending;
 
             var response;
-            let requestHeaders = getPostHeader(LOGGING_API_URL);
+            let requestHeaders = getPostHeader();
             // Send POST to delete bookings
             try {
                 response = await fetch(temp_target_url, {
@@ -144,12 +143,43 @@
                 //Log the booking using AWS Cloudwatch (future development)
             } catch (error) {
                 console.error('Error: Bad Booking Delete POST request:', error);
-                logMetricToAWS(cloudwatch_url, 'Error: Booking Delete API call: ' + error);
+                sendLog({
+                    level: "ERROR",
+                    message: 'Error: Booking Delete API call: ' + error,
+                    feature: "Delete Member Bookings",
+                    details: {
+                        apiRequest: {
+                            method: 'POST',
+                            endpoint: temp_target_url,
+                            bookingId: booking_id
+                        }
+                    }
+                });
             }
 
             if (response.status !== 200) {
                 console.error('Error: Bad Booking Delete POST request:', response.status);
                 bad_booking_ids.push(booking_id);
+                let respBody = {};
+                try {
+                    respBody = await response.json();
+                } catch (e) {}
+                sendLog({
+                    level: "ERROR",
+                    message: 'Failed to delete booking',
+                    feature: "Delete Member Bookings",
+                    details: {
+                        apiRequest: {
+                            method: 'POST',
+                            endpoint: temp_target_url,
+                            bookingId: booking_id
+                        },
+                        apiResponse: {
+                            statusCode: response.status,
+                            body: respBody
+                        }
+                    }
+                });
             }
     
             incrementProgressBar(i+1, bookings.length);
@@ -157,6 +187,15 @@
         const end = performance.now();
         let time_to_delete = (end-start) / 1000; // in seconds
         removeProgressBar();
+
+        sendLog({
+            level: "SUCCESS",
+            message: "Bookings deleted",
+            feature: "Delete Member Bookings",
+            details: {
+                bookingsDeleted: bookings.length - bad_booking_ids.length
+            }
+        });
 
         // Change Booking Message
         const modal_center_text = document.querySelector("body > delete-booking-modal > div.modal.note-modal.fade.in > div > div > form > div.modal-body > div > div > p");        

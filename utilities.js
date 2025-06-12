@@ -13,6 +13,9 @@
 
     console.log('Utilities script loaded');
 
+    // Endpoint for structured logging
+    const LOGGING_API_URL = '';
+
     /**
      * Retrieves a value from the browser's localStorage and parses it as JSON.
      *
@@ -74,34 +77,27 @@
     }
 
     /* Example usage:
-    logSuccessToAWS({
-        LOGGING_API_URL: URL,
-        status: "SUCCESS",
-        message: "Successful booking",
-        api_request_param: validbooking[2]
-    });  
-           ^ You don’t need to specify null for missing values */
-           function logMetricToAWS({ LOGGING_API_URL, level, message, feature, time_saved = null, api_request_param = null, api_response_param = null, additional = {} }) {
+    sendLog({
+        level: "SUCCESS",
+        message: "Service Booking created",
+        feature: "Recurring Booking",
+        details: {
+            time_saved: 50,
+            apiRequest: validBookingPayload
+        }
+    }); */
+           function sendLog({ level, message, feature, details = {} }) {
             const timestamp = new Date().toISOString();
-        
-            // Merge all fields into additional 
-            additional = { 
-                ...(time_saved !== null && { time_saved }), 
-                ...(api_request_param !== null && { apiRequest: api_request_param }), 
-                ...(api_response_param !== null && { apiResponse: api_response_param }),
-                ...additional // Ensure custom fields are included
-            };
-        
-            // Prepare payload
+
             const payload = {
                 timestamp,
-                level,  // Ensure level is included
-                feature,
+                level,
                 message,
-                ...(Object.keys(additional).length > 0 && { details: additional }) // Additional parameters if present
+                feature,
+                ...(Object.keys(details).length > 0 && { details })
             };
 
-            // Send log to AWS
+            // Send log to the configured endpoint
             fetch(LOGGING_API_URL, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -145,16 +141,17 @@
         console.warn('convertDatetimeToString is already defined and will not be overwritten.');
     }
 
-    // Make the logMetricToAWS function available globally but protect against overwriting
-    if (!window.logMetricToAWS) {
-        Object.defineProperty(window, 'logMetricToAWS', {
-            value: logMetricToAWS,
+
+    // Make the sendLog function available globally but protect against overwriting
+    if (!window.sendLog) {
+        Object.defineProperty(window, 'sendLog', {
+            value: sendLog,
             writable: false, // Prevent overwriting
             configurable: false, // Prevent redefinition
         });
-        console.log('logMetricToAWS function is now globally available.');
+        console.log('sendLog function is now globally available.');
     } else {
-        console.warn('logMetricToAWS is already defined and will not be overwritten.');
+        console.warn('sendLog is already defined and will not be overwritten.');
     }
 
     // Make the getPostHeader function available globally but protect against overwriting

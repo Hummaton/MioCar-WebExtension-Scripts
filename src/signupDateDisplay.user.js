@@ -14,7 +14,6 @@
 
     /************* FILL IN FOR PRODUCTION SCRIPT  */
     const TARGET_URL = ""; // Target API endpoint
-    const LOGGING_API_URL = ""; // Logging API endpoint
     /************* FILL IN FOR PRODUCTION SCRIPT  */
 
     // Empty array to store API response data
@@ -188,10 +187,10 @@
                     data_response_arr = JSON.parse(this.responseText);
                 } catch (error) {
                     console.error("Error parsing response data: ", error);
-                    logMetricToAWS({
-                        LOGGING_API_URL,
+                    sendLog({
                         level: "ERROR",
                         message: `Error parsing response data for Date Display: ${error.message}`,
+                        feature: "Signup Date Display"
                     });
                 }
             });
