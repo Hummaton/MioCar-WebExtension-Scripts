@@ -14,6 +14,9 @@
     'use strict';
 
     const ORDERFORMURL = "https://mvrcheck.instascreen.net/order/new.taz";
+    const ORIGIN = 'https://mvrcheck.instascreen.net';
+
+    let credentials = null;
 
     // Function to process state data
     function process_state_data(state) {
@@ -112,39 +115,47 @@
     const currentUrl = window.location.href;
     const hash = window.location.hash;
 
+    function handleData(data) {
+        data.state = process_state_data(data.state);
+        const mvr_form_input = {
+            first_name: data.first_name,
+            middle_name: data.middle_name,
+            last_name: data.last_name,
+            dob: data.dob,
+            license_number: data.license_number,
+            state: data.state,
+            resident_community: data.resident_community,
+        };
+
+        credentials = {
+            username: data.username,
+            password: data.password
+        };
+
+        sessionStorage.setItem("script_state", "init");
+        sessionStorage.setItem("mvr_form_input", JSON.stringify(mvr_form_input));
+        console.log("[MVRCheck] Received user data");
+    }
+
     if (hash.startsWith("#data=")) {
         try {
             const encoded = hash.replace("#data=", "");
             const json = atob(encoded);
             const data = JSON.parse(json);
-
-            data.state = process_state_data(data.state);
-
-            // Save form info to sessionStorage
-            const mvr_form_input = {
-                first_name: data.first_name,
-                middle_name: data.middle_name,
-                last_name: data.last_name,
-                dob: data.dob,
-                license_number: data.license_number,
-                state: data.state,
-                resident_community: data.resident_community,
-            };
-
-            var credentials = {
-                username: data.username,
-                password: data.password
-            };
-
-            var script_state = "init";
-            sessionStorage.setItem("script_state", script_state);
-
-            sessionStorage.setItem("mvr_form_input", JSON.stringify(mvr_form_input));
-            console.log("[MVRCheck] Decoded user data and saved to session storage");
-
-        } catch (err) { 
+            handleData(data);
+        } catch (err) {
             console.error("Failed to decode base64 from URL:", err);
         }
+    }
+
+    window.addEventListener('message', (event) => {
+        if (event.origin === ORIGIN && event.data && event.data.type === 'DATA') {
+            handleData(event.data.payload);
+        }
+    });
+
+    if (window.opener) {
+        window.opener.postMessage('READY', '*');
     }
 
     console.log("[MVRCheck] Current URL:", currentUrl);
@@ -164,7 +175,7 @@
             const stored = sessionStorage.getItem("mvr_form_input");
             if (!stored) return;
 
-            if (usernameField && passwordField && loginButton) {
+            if (usernameField && passwordField && loginButton && credentials) {
                 usernameField.value = credentials.username;
                 passwordField.value = credentials.password;
 

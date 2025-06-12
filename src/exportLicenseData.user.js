@@ -12,17 +12,60 @@
 
 (function() {
     'use strict';
+
+    const SESSION_KEY = 'mvr_secure_key';
+
+    function arrayBufferToBase64(buffer) {
+        return btoa(String.fromCharCode(...new Uint8Array(buffer)));
+    }
+
+    function base64ToArrayBuffer(base64) {
+        const binary = atob(base64);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) {
+            bytes[i] = binary.charCodeAt(i);
+        }
+        return bytes.buffer;
+    }
+
+    async function getKey() {
+        const enc = new TextEncoder().encode(SESSION_KEY);
+        return crypto.subtle.importKey('raw', enc, 'AES-GCM', false, ['encrypt', 'decrypt']);
+    }
+
+    async function encryptText(text) {
+        const iv = crypto.getRandomValues(new Uint8Array(12));
+        const key = await getKey();
+        const encoded = new TextEncoder().encode(text);
+        const cipher = await crypto.subtle.encrypt({name: 'AES-GCM', iv}, key, encoded);
+        return arrayBufferToBase64(iv) + ':' + arrayBufferToBase64(cipher);
+    }
+
+    async function decryptText(data) {
+        try {
+            const [ivStr, cipherStr] = data.split(':');
+            const iv = new Uint8Array(base64ToArrayBuffer(ivStr));
+            const cipher = base64ToArrayBuffer(cipherStr);
+            const key = await getKey();
+            const decrypted = await crypto.subtle.decrypt({name: 'AES-GCM', iv}, key, cipher);
+            return new TextDecoder().decode(decrypted);
+        } catch (err) {
+            console.error('Failed to decrypt credentials', err);
+            return '';
+        }
+    }
     
     const MVRCHECKURL = "https://mvrcheck.instascreen.net/is/app"; // Updated URL
 
     function openMVRCheckWindow(memberInfo) {
-        // Convert object to base64    
-        
-        // CURRENT SOLUTION: SUBJECT TO CHANGE
-        const base64 = btoa(JSON.stringify(memberInfo));
-        const targetURL = `${MVRCHECKURL}#data=${base64}`;
-
-        window.open(targetURL, "_blank");
+        const newWindow = window.open(MVRCHECKURL, "_blank");
+        function handleReady(event) {
+            if (event.source === newWindow && event.data === 'READY') {
+                newWindow.postMessage({ type: 'DATA', payload: memberInfo }, 'https://mvrcheck.instascreen.net');
+                window.removeEventListener('message', handleReady);
+            }
+        }
+        window.addEventListener('message', handleReady);
     }
 
     // Function to format user data into a CSV file
@@ -171,7 +214,7 @@
     }
 
     // Function to add the recurring service booking options
-    function addButton() {
+    async function addButton() {
         // Select the target element where buttons will be added
         var actionRow = document.querySelector("body > sc-app-root > sc-app-root > div:nth-child(2) > section > div > div > div:nth-child(1) > main > ng-component > form > div > section:nth-child(1) > header > div > div.col-md-4 > div.page-actions");
 
@@ -186,6 +229,9 @@
             let mvr_username = sessionStorage.getItem('mvr_username');
             let mvr_password = sessionStorage.getItem('mvr_password');
 
+            if (mvr_username) mvr_username = await decryptText(mvr_username);
+            if (mvr_password) mvr_password = await decryptText(mvr_password);
+
             mvr_button.onclick = function(){
                 // Create a popup modal for entering credentials
                 const modal = document.createElement('div');
@@ -199,7 +245,7 @@
                 if (mvr_username) usernameInput.value = mvr_username;
                 if (mvr_password) passwordInput.value = mvr_password
 
-                submitButton.onclick = () => {
+                submitButton.onclick = async () => {
                     mvr_username = usernameInput.value.trim();
                     mvr_password = passwordInput.value.trim();
 
@@ -209,8 +255,10 @@
                     }
 
                     // store the credentials in session storage for future use
-                    sessionStorage.setItem('mvr_username', mvr_username);
-                    sessionStorage.setItem('mvr_password', mvr_password);
+                    const encUser = await encryptText(mvr_username);
+                    const encPass = await encryptText(mvr_password);
+                    sessionStorage.setItem('mvr_username', encUser);
+                    sessionStorage.setItem('mvr_password', encPass);
 
                     document.body.removeChild(modal);
                     document.body.removeChild(document.querySelector('.modal-backdrop')); // Remove the backdrop when modal is closed
