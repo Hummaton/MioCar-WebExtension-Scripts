@@ -3,7 +3,19 @@
 // @namespace    http://tampermonkey.net/
 // @description  Extracts member data from sharecar application
 // @version      2025-05-04
-// @match        https://admin.share.car/communities/*/customers/members*
+    let cachedKey = null;
+
+        if (cachedKey) return cachedKey;
+
+        const hash = await crypto.subtle.digest('SHA-256', enc);
+        cachedKey = await crypto.subtle.importKey(
+            'raw',
+            hash,
+            'AES-GCM',
+            false,
+            ['encrypt', 'decrypt']
+        );
+        return cachedKey;
 // @match        https://mvrcheck.instascreen.net/is/app
 // @updateURL    https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/refs/heads/main/src/exportLicenseData.user.js
 // @downloadURL  https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/refs/heads/main/src/exportLicenseData.user.js
