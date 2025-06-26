@@ -17,7 +17,6 @@
 
     /************* FILL IN FOR PRODUCTION SCRIPT  */
     const TARGET_URL = ""; // Target API endpoint
-    const LOGGING_API_URL = ""; // Logging API endpoint
     /************* FILL IN FOR PRODUCTION SCRIPT  */
 
     // Utility functions
@@ -176,23 +175,20 @@
                     console.log("Member Bookings processed: ", data_response_arr._embedded.items.length);
                     const time_saved = 160 * member_bookings.length;
                     console.log("Time saved: ", time_saved);
-                    logMetricToAWS({
-                        LOGGING_API_URL: LOGGING_API_URL,
+                    sendLog({
                         level: "SUCCESS",
                         message: `Report generated successfully`,
                         feature: "Report Generation",
-                        time_saved : time_saved,
-                        additional: { 
-                            bookingsProcessed: data_response_arr._embedded.items.length,
-                            invalidBookings: data_response_arr._embedded.items - member_bookings.length,
-                        },
+                        details: {
+                            bookingsProcessed: data_response_arr._embedded.items.length
+                        }
                     });
                 } catch (error) {
                     console.error("Error generating report: ", error);
-                    logMetricToAWS({
-                        LOGGING_API_URL: LOGGING_API_URL,
+                    sendLog({
                         level: "ERROR",
                         message: `Error generating report:" ${error.message}`,
+                        feature: "Report Generation"
                     });
                 }
             });
@@ -234,10 +230,10 @@
                     // let formatted_date = stripData(data_response_arr); //TODO: Extract only the necessary data for the LLM 
                 } catch (error) {
                     console.error("Error parsing response data: ", error);
-                    logMetricToAWS({
-                        LOGGING_API_URL,
+                    sendLog({
                         level: "ERROR",
                         message: `Error parsing response data for Report Generation: ${error.message}`,
+                        feature: "Report Generation"
                     });
                 }
             });
