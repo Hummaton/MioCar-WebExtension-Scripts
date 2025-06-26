@@ -1,6 +1,7 @@
 // ==UserScript==
 // @name         Export License Data
 // @namespace    http://tampermonkey.net/
+// @description  Extracts member data from sharecar application
 // @version      2025-05-04
 // @match        https://admin.share.car/communities/*/customers/members*
 // @match        https://mvrcheck.instascreen.net/is/app
