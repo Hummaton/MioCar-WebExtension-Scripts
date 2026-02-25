@@ -1,17 +1,52 @@
 // ==UserScript==
 // @name         Recurring Booking Backend
 // @namespace    http://tampermonkey.net/
-// @version      2025-05-04
+// @version      2025-05-05
 // @match        https://admin.share.car/communities/*/fleet/vehicles/*
 // @updateURL    https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/refs/heads/main/src/recurringBookingBackend.user.js
 // @downloadURL  https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/refs/heads/main/src/recurringBookingBackend.user.js
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=share.car
 // @require      https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/main/utilities.js
-// @grant        none
+// @grant        GM_info
+// @grant        GM_getValue
+// @grant        GM_setValue
 // ==/UserScript==
 
 (function() {
     'use strict';
+
+    // ===================================================================
+    // USAGE LOGGING
+    // ===================================================================
+
+    const LOGGING_URL = 'https://your-frontend-url.com/api/scripts/log-usage';
+
+    function logScriptUsage(action, metadata = {}) {
+        const payload = {
+            scriptName: GM_info.script.name,
+            action: action,
+            metadata: {
+                version: GM_info.script.version,
+                url: window.location.href,
+                ...metadata
+            }
+        };
+
+        fetch(LOGGING_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        }).catch(err => console.error('Script logging failed:', err));
+    }
+
+    // Track installation (first run only)
+    if (!GM_getValue('installed', false)) {
+        logScriptUsage('installed');
+        GM_setValue('installed', true);
+    }
+
+    // Track execution
+    logScriptUsage('executed');
 
     /* HTTP Responses */
     // The HTTP 201 Created successful response status code indicates that the HTTP request has led to the creation of a resource.

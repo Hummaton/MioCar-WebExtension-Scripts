@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Report Generation
 // @namespace    http://tampermonkey.net/
-// @version      2025-05-04
+// @version      2025-05-05
 // @description  Adds a button to export booking reports as CSV
 // @match        https://admin.share.car/reports
 // @updateURL    https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/refs/heads/main/src/reportGeneration.user.js
@@ -9,7 +9,9 @@
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=share.car
 // @require      https://raw.githubusercontent.com/Hummaton/MioCar-WebExtension-Scripts/main/utilities.js
 // @require      https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js
-// @grant        none
+// @grant        GM_info
+// @grant        GM_getValue
+// @grant        GM_setValue
 // ==/UserScript==
 
 (function() {
@@ -17,8 +19,40 @@
 
     /************* FILL IN FOR PRODUCTION SCRIPT  */
     const TARGET_URL = ""; // Target API endpoint
-    const LOGGING_API_URL = ""; // Logging API endpoint
     /************* FILL IN FOR PRODUCTION SCRIPT  */
+
+    // ===================================================================
+    // USAGE LOGGING
+    // ===================================================================
+
+    const LOGGING_URL = 'https://your-frontend-url.com/api/scripts/log-usage';
+
+    function logScriptUsage(action, metadata = {}) {
+        const payload = {
+            scriptName: GM_info.script.name,
+            action: action,
+            metadata: {
+                version: GM_info.script.version,
+                url: window.location.href,
+                ...metadata
+            }
+        };
+
+        fetch(LOGGING_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        }).catch(err => console.error('Script logging failed:', err));
+    }
+
+    // Track installation (first run only)
+    if (!GM_getValue('installed', false)) {
+        logScriptUsage('installed');
+        GM_setValue('installed', true);
+    }
+
+    // Track execution
+    logScriptUsage('executed');
 
     // Utility functions
     function formatTime(date) {
